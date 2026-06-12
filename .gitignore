@@ -1,0 +1,31 @@
+# Build output
+dist
+dist-ssr
+
+# Dependencies
+node_modules
+
+# Logs
+*.local
+logs
+*.log
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Test / coverage
+coverage
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript build cache
+*.tsbuildinfo
