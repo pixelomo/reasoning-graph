@@ -76,3 +76,89 @@ function mulberry32(a: number) {
   }
 }
 ```
+
+## generateSampleGraph -- line by line
+
+```ts
+// Pull in the domain types and cast helpers from types.ts
+import { Node, Edge, nodeId, edgeId } from './types'
+
+// An array of the three edge kind strings, locked to literal types by `as const`.
+// Without `as const` TypeScript infers string[], which won't satisfy the Edge kind union.
+const edgeKinds = ['supports', 'contradicts', 'derives'] as const
+
+export function generateSampleGraph(
+  nodeCount: number,  // how many nodes to create
+  seed: number,       // starting value for the PRNG -- same seed = same graph
+): { nodes: Node[]; edges: Edge[] } {
+
+  // mulberry32 returns a closure. prng() gives the next float in [0, 1) each call.
+  const prng = mulberry32(seed)
+
+  const nodes: Node[] = []  // will be filled in the first loop
+  const edges: Edge[] = []  // will be filled in the second loop
+
+  // --- Node generation ---
+  for (let i = 0; i < nodeCount; i++) {
+
+    // i % 3 cycles 0, 1, 2, 0, 1, 2 ... so we get a mix of all three node kinds
+    switch (i % 3) {
+      case 0:
+        // nodeId() wraps the string in the NodeId brand -- safe to use as NodeId anywhere
+        nodes.push({ id: nodeId(`node-${i}`), kind: 'concept', label: `Concept ${i}`, weight: prng() })
+        break
+      case 1:
+        nodes.push({ id: nodeId(`node-${i}`), kind: 'rule', premise: [`Premise ${i}`], conclusion: `Conclusion ${i}` })
+        break
+      case 2:
+        nodes.push({
+          id: nodeId(`node-${i}`),
+          kind: 'relation',
+          // prng() * (i - 1) gives a random index in 0..i-2.
+          // Math.floor truncates to an integer index.
+          // We look up .id on the already-created node -- no string construction needed,
+          // and the type is NodeId because that's what the node's id field holds.
+          from: nodes[Math.floor(prng() * (i - 1))].id,
+          to:   nodes[Math.floor(prng() * (i - 1))].id,
+          strength: prng(),
+        })
+        break
+    }
+  }
+
+  // --- Edge generation ---
+  // Loop over the completed nodes array (not nodeCount) so we use real indices.
+  for (let i = 0; i < nodes.length; i++) {
+
+    // Pick 1, 2, or 3 connections for this node.
+    // prng() * 3 gives [0, 3). Math.floor gives 0, 1, or 2. Adding 1 gives 1, 2, or 3.
+    const connectionCount = 1 + Math.floor(prng() * 3)
+
+    for (let c = 0; c < connectionCount; c++) {
+
+      // Pick a random target node index
+      const j = Math.floor(prng() * nodes.length)
+
+      // Skip self-connections (a node pointing to itself makes no sense in this graph)
+      if (j === i) continue
+
+      edges.push({
+        // edgeId() gives an EdgeId brand -- distinct from NodeId, TypeScript enforces this
+        id: edgeId(`edge-${i}-${c}`),
+
+        // Index into edgeKinds with a random int 0-2.
+        // Works because edgeKinds is `as const` -- the result is a literal type, not string.
+        kind: edgeKinds[Math.floor(prng() * edgeKinds.length)],
+
+        // nodes[i].id is already a NodeId -- no casting needed
+        from: nodes[i].id,
+        to:   nodes[j].id,
+      })
+    }
+  }
+
+  return { nodes, edges }
+}
+```
+
+
