@@ -1,5 +1,5 @@
-type NodeId = string & { readonly __brand: 'NodeId' }
-type EdgeId = string & { readonly __brand: 'EdgeId' }
+export type NodeId = string & { readonly __brand: 'NodeId' }
+export type EdgeId = string & { readonly __brand: 'EdgeId' }
 
 export type Node = 
   | { kind: 'concept'; id: NodeId; label: string; weight: number }
