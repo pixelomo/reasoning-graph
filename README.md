@@ -1,5 +1,5 @@
 # Reasoning Graph Visualization
-
+<img width="1406" height="915" alt="Screenshot" src="https://github.com/user-attachments/assets/09a6216c-faa8-4e0b-b251-dee59570ffe4" />
 A Vue 3 + TypeScript + WebGL2 application that renders interactive reasoning graphs with instanced rendering and GPU picking. It has two views over the same data: a rotating low-poly **sphere** wireframe, and a flat **graph** that scales to hundreds of thousands of nodes. Both run on raw WebGL2, with one draw call for all nodes and one for all edges.
 
 [Live demo](https://example.vercel.app) · [Screenshot or GIF goes here]
