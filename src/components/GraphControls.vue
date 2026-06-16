@@ -96,11 +96,4 @@ button.active {
   border-color: #6d74ca;
   background: #232a3d;
 }
-
-.hint {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #6b7280;
-}
 </style>

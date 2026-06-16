@@ -20,7 +20,7 @@ function assertNever(x: never): never {
 
 export function describeNode(node: Node): string {
   switch (node.kind) {
-    case 'concept': return node.label; // narrowed
+    case 'concept': return node.label; 
     case 'relation': return `${node.from} -> ${node.to}`;
     case 'rule': return node.conclusion;
     default: assertNever(node)
