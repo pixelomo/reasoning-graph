@@ -1,7 +1,5 @@
 # Study notes
 
-Personal reference. Write these in your own words after each session -- the act of rewriting is part of the learning.
-
 ---
 
 ## Discriminated unions
@@ -161,4 +159,139 @@ export function generateSampleGraph(
 }
 ```
 
+# Pinia
 
+## shallowRef vs ref 
+
+### You used shallowRef for nodes and edges but plain ref for selectedNodeId, mode, and seed. In your own words: what is the actual difference in what Vue tracks between ref and shallowRef, and why did you split them that way?
+
+shallowRef only tracks the array itself not every nested property - nodes/edges may contain 100,000+ nodes - tracking all of these for every node interaction would slow/freeze the app. It's not just faster it's also the correct update pattern here, you always replace the whole array nodes.value = graph.nodes never node.values[i] = ... mutating a node in place. Reactivity only fires on reassignment. ref is the conventional default for smaller scalars such as selectedNodeId, deep vs shallow makes no difference.
+
+###  suppose you'd used a plain ref<Node[]>([]) instead of shallowRef, AND somewhere in the codebase you did store.nodes.value[0].label = 'changed' (mutating in place). Walk me through what happens with ref, versus what happens with shallowRef. What's the observable difference in behavior? The scenario is: you mutate in place — store.nodes.value[0].label = 'changed'. A component is displaying that label. Think about what the user actually sees on screen in each case. What's the difference?
+
+With ref the label updates, the user sees 'changed', while shallowRef does mutate label to 'changed' the app silently fails. What doesn't happen is the reactivity trigger: Vue never knows the mutation occurred, so the DOM never re-renders the old label. That's the trade-off with shallowRef: you give up automatic in-place tracking in exchange for performance, which is fine because my update pattern is always whole-array replacement.
+
+## A teammate writes this in a component:
+
+## const store = useGraphStore()
+## const { nodeCount, selectedNode } = store
+## They destructure straight off the store. It works at first, then the UI stops updating when the graph changes. What's wrong, what's the fix, and why does that fix exist?
+## Why does plain destructuring break in the first place?
+
+Plain destructuring a reactive object copies the property's current value into a plain variable with no connection to the live state, The reactivity lived in the store reference; storeToRefs fixes this by wrapping each state and computed property in a ref which is connected to the store, if a component destructures it doesnt break reactivity because it's still connected to the store state. functions dont need reactive wrappers, we can destructure and they will still be called the same way and not break reactivity
+
+## The Pinia store is a reactive object
+
+## plain destructure = dead copy
+## const { nodeCount } = store
+Copies the current value into a local disconnected variable, When the store updates nodeCount later, the local nodeCount is still the old value. 
+
+## storeToRefs = live ref wrapper
+## import { storeToRefs } from 'pinia'
+## const store = useGraphStore()
+## const { nodeCount, selectedNode } = storeToRefs(store)
+
+plain destructure = dead copy, storeToRefs = live ref wrapper
+
+
+## ref vs computed:
+
+## In your store, selectedNode is a computed, but selectedNodeId is a ref. Why is selectedNode a computed and not, say, a regular ref that you manually update inside selectNode? What does computed give you that you'd have to do by hand otherwise, and what's the risk of the manual approach?
+
+computed is the single source of truth for derived state; a manual ref is a cache you're obligated to invalidate yourself, and you may eventually forget a site where it needs to be updated.
+
+selectedNode depends on two things: selectedNodeId and nodes. Look at your computed:
+
+## const selectedNode = computed(() =>
+##   nodes.value.find((node) => node.id === selectedNodeId.value) ?? null
+## )
+
+If you instead made it a manual ref and updated it inside selectNode, you'd have to remember to re-sync it in every place that affects the result:
+
+## in selectNode (the id changed) ✓ you'd remember this one
+## in clearSelection (set it back to null)
+## in regenerate — this is the killer. You swap out the entire nodes array. If a node with the old selected id no longer exists, your manual selectedNode ref would still point at a stale node object that's no longer in the graph. You'd have to manually recompute it there too.
+
+computed makes the staleness impossible: it re-derives from whatever nodes and selectedNodeId currently are, automatically, every time either changes. The manual approach is derived state you have to keep in sync by hand, and the risk is exactly what we discussed in Q2 — silent staleness when you forget one of the update sites.
+
+manual ref would need to be updated in every place that affects state, we may well miss one, computed makes this impossible and acts as the single source of true state
+
+
+setup-store syntax:
+
+You wrote this as a setup store — defineStore('graph', () => { ... }) with a setup function — rather than the options style (defineStore('graph', { state, getters, actions })). At the bottom you have an explicit return { ... } listing everything.
+
+Two parts: (a) In the setup-store mapping, what role does each piece play — what is the equivalent of state, what is the equivalent of getters, what is the equivalent of actions? (b) What happens if you forget to include something in that final return object — say you leave out clearSelection?
+
+<!-- equivalent of state -->
+nodes,
+edges,
+selectedNodeId,
+mode
+
+<!-- equivalent of getters -->
+selectedNode
+nodeCount,
+edgeCount,
+
+<!-- equivalent of actions -->
+regenerate,
+setMode,
+selectNode,
+clearSelection,
+
+mode is ref<LayoutMode>('sphere') 
+
+## state = the refs/shallowRefs: nodes, edges, selectedNodeId, mode
+## getters = the computeds only: selectedNode, nodeCount, edgeCount
+## actions = the plain functions: regenerate, setMode, selectNode, clearSelection
+The rule of thumb: how it was declared determines its category, not where it sits in the return list. ref/shallowRef → state, computed → getter, function → action.
+
+Look at seed — you declared it with const seed = ref(1) but you never returned it. That's not a bug, that's a feature: anything you don't return is private to the store. seed is internal state that only regenerate and setMode touch; no component can read or mutate it. That's encapsulation you get for free with setup syntax — the options API can't easily make state private. 
+
+So for "what if you leave out clearSelection": it becomes private, exactly like seed. It's not that the app throws everywhere automatically — it's that store.clearSelection is no longer part of the public API. Because you're in TypeScript strict mode, this is even nicer: store.clearSelection() in a component becomes a compile-time type error ("Property 'clearSelection' does not exist"), caught by vue-tsc before runtime. In plain JS it'd be a runtime store.clearSelection is not a function. TS turns a runtime crash into a build failure — which is half the reason this project is in TS at all.
+
+seed was never returned, on purpose, anything we dont return remains private to the store, seed is internal state only regenerate and setMode touch, no component can mutate seed state. set up syntax grants encapsulation, whereas the options API cant easily make state private
+
+Look at setMode:
+
+
+function setMode(next: LayoutMode): void {
+  if (mode.value === next) return
+  mode.value = next
+  regenerate(mode.value === 'sphere' ? 300 : 10000)
+}
+
+Changing the layout mode regenerates the entire graph. But back in your Phase 2 notes you wrote the principle yourself: "Graph data vs. layout separation — the data model holds node ids and edges. Pixel positions are the renderer's concern, not the domain model's." sphere vs disc is a layout concern — it's about where existing nodes get placed, not about what the graph is. Right now, toggling the view throws away the entire graph and the user's selection and builds a brand new one. If I select a node, switch to disc view to see it differently, my selection and my whole graph vanish. That contradicts the separation principle you set up.
+
+The node counts 300 / 10000 are hardcoded inside a mode switch. Now "which view" and "how many nodes" are welded together. You can't have a 300-node disc or a 10k-node sphere without editing the store.
+
+Good instinct — you've spotted that the node count was never really a property of the mode. Let me give you the mental model, then you write it.
+
+The key realization: "how many nodes" and "which layout" are orthogonal. A sphere can hold 10k nodes; a disc can hold 300. The 300/10000 pairing was a convenience default for demoing each mode, not a rule. So the fix isn't to find a clever home for that mapping — it's to recognize the mapping shouldn't drive the data at all.
+
+Three concerns, cleanly separated:
+
+Concern	Owner	Action
+What the graph is (nodes/edges)	store data	regenerate(count)
+How many nodes	whoever calls regenerate	a count argument
+Where nodes are placed	the renderer (later phases)	reads mode, computes positions
+So setMode does exactly one thing — set the mode:
+
+
+function setMode(next: LayoutMode): void {
+  if (mode.value === next) return
+  mode.value = next
+}
+That's it. The renderer (Phase 6+) will watch mode and re-place the existing nodes — positions are a pure function of (nodes, mode). No data thrown away, selection preserved.
+
+Now — where does the "switching to disc usually wants more nodes" behavior go, if you still want it? Not in the store. That's a UI choice, so it lives in the component that owns the buttons (GraphControls.vue, Phase 4). The component can do both calls explicitly:
+
+
+function showDiscView() {
+  store.setMode('disc')
+  store.regenerate(10000)
+}
+Now the coupling is opt-in at the call site and visible, instead of baked into the store. If someone wants a 300-node disc, they just don't make the second call. The store stays dumb and honest; the policy lives in the UI.
+
+The principle to take to the interview: a store action should do one thing and not encode UI policy. setMode setting the mode and secretly regenerating and picking a count is three responsibilities hiding in one function.
