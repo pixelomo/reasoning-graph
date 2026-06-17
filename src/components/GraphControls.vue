@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGraphStore } from '@/stores/graph-store'
+import type { LayoutMode } from '@/webgl/layout'
 
 const store = useGraphStore()
 const { mode, nodeCount } = storeToRefs(store)
@@ -9,7 +10,18 @@ const { mode, nodeCount } = storeToRefs(store)
 const SPHERE_COUNTS = [40, 100, 300, 1000]
 const DISC_COUNTS = [1000, 10000, 100000, 250000]
 
+const DEFAULT_COUNT: Record<LayoutMode, number> = {
+  sphere: 40,
+  disc: 1000,
+}
+
 const counts = computed(() => (mode.value === 'sphere' ? SPHERE_COUNTS : DISC_COUNTS))
+
+function selectMode(next: LayoutMode): void {
+  if (next === mode.value) return
+  store.setMode(next)
+  store.regenerate(DEFAULT_COUNT[next])
+}
 </script>
 
 <template>
@@ -19,14 +31,14 @@ const counts = computed(() => (mode.value === 'sphere' ? SPHERE_COUNTS : DISC_CO
       <button
         type="button"
         :class="{ active: mode === 'sphere' }"
-        @click="store.setMode('sphere')"
+        @click="selectMode('sphere')"
       >
         Sphere
       </button>
       <button
         type="button"
         :class="{ active: mode === 'disc' }"
-        @click="store.setMode('disc')"
+        @click="selectMode('disc')"
       >
         Graph
       </button>
@@ -95,5 +107,12 @@ button:hover {
 button.active {
   border-color: #6d74ca;
   background: #232a3d;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
 }
 </style>
