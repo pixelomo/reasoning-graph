@@ -6,7 +6,8 @@ import { useCamera } from '@/composables/useCamera'
 import { useFps } from '@/composables/useFps'
 import { usePicking } from '@/composables/usePicking'
 import { GraphRenderer } from '@/webgl/renderer'
-import { computeLayout } from '@/webgl/layout'
+import { computeLayout, type GraphGeometry } from '@/webgl/layout'
+import { mulberry32 } from '@/domain/sample-data'
 import type { NodeId } from '@/domain/types'
 import StatsOverlay from './StatsOverlay.vue'
 
@@ -31,6 +32,13 @@ let breathe = 1
 let dragging = false
 const idToIndex = new Map<NodeId, number>()
 
+// Adjacency over the drawn edges, rebuilt with the geometry. Used to compute
+// the random highlight subgraph on the CPU when the selection changes.
+let adjacency: number[][] = []
+let edgeKeyToIndex = new Map<number, number>()
+let edgeKeyStride = 1
+let edgeCountCpu = 0
+
 function currentTime(): number {
   return (performance.now() - startTime) / 1000
 }
@@ -46,8 +54,60 @@ function rebuildGeometry(birth: number): void {
   idToIndex.clear()
   nodes.value.forEach((node, i) => idToIndex.set(node.id, i))
   renderer.upload(geometry)
+  buildAdjacency(geometry)
+  applyHighlight()
   camera.fit(geometry.worldRadius)
   camera.reset()
+}
+
+function buildAdjacency(geometry: GraphGeometry): void {
+  const n = Math.max(geometry.nodeCount, 1)
+  edgeKeyStride = n
+  edgeCountCpu = geometry.edgeCount
+  adjacency = Array.from({ length: geometry.nodeCount }, () => [])
+  edgeKeyToIndex = new Map<number, number>()
+  for (let e = 0; e < geometry.edgeCount; e++) {
+    const a = geometry.edgeStartIdx[e]
+    const b = geometry.edgeEndIdx[e]
+    adjacency[a].push(b)
+    adjacency[b].push(a)
+    edgeKeyToIndex.set(Math.min(a, b) * n + Math.max(a, b), e)
+  }
+}
+
+// Light a random subgraph rooted at the selected node: 1-4 of its neighbours,
+// then 1-2 of each of those neighbours' own neighbours. Seeded per node so the
+// pattern is stable for a given selection.
+function applyHighlight(): void {
+  if (!renderer) return
+  const flags = new Float32Array(edgeCountCpu)
+  const root = selectedIndex()
+  if (root >= 0) {
+    const prng = mulberry32(root + 1)
+    const used = new Set<number>([root])
+    const flagEdge = (a: number, b: number): void => {
+      const idx = edgeKeyToIndex.get(Math.min(a, b) * edgeKeyStride + Math.max(a, b))
+      if (idx !== undefined) flags[idx] = 1
+    }
+    const pick = (candidates: number[], count: number): number[] => {
+      const chosen: number[] = []
+      let guard = 0
+      while (chosen.length < count && guard < candidates.length * 3) {
+        const c = candidates[Math.floor(prng() * candidates.length)]
+        if (!used.has(c)) {
+          used.add(c)
+          chosen.push(c)
+        }
+        guard += 1
+      }
+      return chosen
+    }
+    for (const j of pick(adjacency[root] ?? [], 1 + Math.floor(prng() * 4))) {
+      flagEdge(root, j)
+      for (const k of pick(adjacency[j] ?? [], 1 + Math.floor(prng() * 2))) flagEdge(j, k)
+    }
+  }
+  renderer.setHighlight(flags)
 }
 
 function resize(): void {
@@ -133,6 +193,7 @@ usePicking({
 })
 
 watch([nodes, edges, mode], () => rebuildGeometry(currentTime()))
+watch(selectedNodeId, () => applyHighlight())
 
 onMounted(() => {
   const canvas = canvasEl.value

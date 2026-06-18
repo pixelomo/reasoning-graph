@@ -6,6 +6,7 @@ layout(location = 1) in vec3 a_start;
 layout(location = 2) in vec3 a_end;
 layout(location = 3) in vec3 a_colorStart;
 layout(location = 4) in vec3 a_colorEnd;
+layout(location = 5) in float a_highlight;
 
 uniform mat4 u_modelView;
 uniform mat4 u_proj;
@@ -14,6 +15,7 @@ uniform float u_lineWidthPx;
 uniform float u_breathe;
 
 out vec3 v_color;
+out float v_highlight;
 
 void main() {
   mat4 mvp = u_proj * u_modelView;
@@ -33,6 +35,7 @@ void main() {
   clipCur.xy += offset * clipCur.w;
   gl_Position = clipCur;
   v_color = mix(a_colorStart, a_colorEnd, a_corner.x);
+  v_highlight = a_highlight;
 }
 `
 
@@ -40,10 +43,16 @@ export const edgeFrag = /* glsl */ `#version 300 es
 precision highp float;
 
 in vec3 v_color;
+in float v_highlight;
 uniform float u_edgeAlpha;
+uniform highp int u_selected;
 out vec4 fragColor;
 
 void main() {
-  fragColor = vec4(v_color, u_edgeAlpha);
+  bool hasSelection = u_selected >= 0;
+  float base = hasSelection ? u_edgeAlpha * 0.3 : u_edgeAlpha;
+  float alpha = mix(base, 0.95, v_highlight);
+  vec3 col = v_color * (1.0 + 0.35 * v_highlight);
+  fragColor = vec4(col, alpha);
 }
 `

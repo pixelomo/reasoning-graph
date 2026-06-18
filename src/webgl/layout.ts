@@ -13,6 +13,8 @@ export interface GraphGeometry {
   edgeEnds: Float32Array
   edgeStartColors: Float32Array
   edgeEndColors: Float32Array
+  edgeStartIdx: Float32Array
+  edgeEndIdx: Float32Array
   worldRadius: number
 }
 
@@ -82,19 +84,41 @@ function nearestNeighborEdges(
   return edges
 }
 
+// Map domain edges (from/to NodeId) to node-index pairs, dropping any whose
+// endpoints are not in the current node set. Used by the disc layout.
+function indexDomainEdges(
+  edges: Edge[],
+  index: Map<NodeId, number>,
+): Array<[number, number]> {
+  const indexed: Array<[number, number]> = []
+  for (const e of edges) {
+    const a = index.get(e.from)
+    const b = index.get(e.to)
+    if (a !== undefined && b !== undefined) indexed.push([a, b])
+  }
+  return indexed
+}
+
 function buildFromIndexedEdges(
   offsets: Float32Array,
   nodeColors: Float32Array,
   indexed: Array<[number, number]>,
-): Pick<GraphGeometry, 'edgeStarts' | 'edgeEnds' | 'edgeStartColors' | 'edgeEndColors'> {
+): Pick<
+  GraphGeometry,
+  'edgeStarts' | 'edgeEnds' | 'edgeStartColors' | 'edgeEndColors' | 'edgeStartIdx' | 'edgeEndIdx'
+> {
   const count = indexed.length
   const edgeStarts = new Float32Array(count * 3)
   const edgeEnds = new Float32Array(count * 3)
   const edgeStartColors = new Float32Array(count * 3)
   const edgeEndColors = new Float32Array(count * 3)
+  const edgeStartIdx = new Float32Array(count)
+  const edgeEndIdx = new Float32Array(count)
 
   for (let k = 0; k < count; k++) {
     const [a, b] = indexed[k]
+    edgeStartIdx[k] = a
+    edgeEndIdx[k] = b
     for (let c = 0; c < 3; c++) {
       edgeStarts[k * 3 + c] = offsets[a * 3 + c]
       edgeEnds[k * 3 + c] = offsets[b * 3 + c]
@@ -102,7 +126,7 @@ function buildFromIndexedEdges(
       edgeEndColors[k * 3 + c] = nodeColors[b * 3 + c]
     }
   }
-  return { edgeStarts, edgeEnds, edgeStartColors, edgeEndColors }
+  return { edgeStarts, edgeEnds, edgeStartColors, edgeEndColors, edgeStartIdx, edgeEndIdx }
 }
 
 function sphereLayout(nodes: Node[], birth: number): GraphGeometry {
@@ -131,7 +155,7 @@ function sphereLayout(nodes: Node[], birth: number): GraphGeometry {
   }
 
   const indexed = nearestNeighborEdges(offsets, n, 6)
-  const edges = buildFromIndexedEdges(offsets, nodeColors, indexed)
+  const builtEdges = buildFromIndexedEdges(offsets, nodeColors, indexed)
 
   return {
     nodeCount: n,
@@ -141,7 +165,7 @@ function sphereLayout(nodes: Node[], birth: number): GraphGeometry {
     radii,
     births,
     worldRadius: SPHERE_RADIUS,
-    ...edges,
+    ...builtEdges,
   }
 }
 
@@ -170,17 +194,14 @@ function discLayout(nodes: Node[], edges: Edge[], birth: number): GraphGeometry 
     nodeColors[i * 3 + 1] = c[1]
     nodeColors[i * 3 + 2] = c[2]
 
+    const DISC_RADIUS_BASE = 0.2
+    const DISC_RADIUS_VARIATION = 0.1
     const variation =
       node.kind === 'concept' ? node.weight : node.kind === 'relation' ? node.strength : 0.5
-    radii[i] = DISC_SPACING * (0.45 + 0.5 * variation)
+    radii[i] = DISC_SPACING * (DISC_RADIUS_BASE + DISC_RADIUS_VARIATION * variation)
   }
 
-  const indexed: Array<[number, number]> = []
-  for (const e of edges) {
-    const a = index.get(e.from)
-    const b = index.get(e.to)
-    if (a !== undefined && b !== undefined) indexed.push([a, b])
-  }
+  const indexed = indexDomainEdges(edges, index)
   const builtEdges = buildFromIndexedEdges(offsets, nodeColors, indexed)
 
   return {

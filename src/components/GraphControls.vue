@@ -7,8 +7,8 @@ import type { LayoutMode } from '@/webgl/layout'
 const store = useGraphStore()
 const { mode, nodeCount } = storeToRefs(store)
 
-const SPHERE_COUNTS = [40, 100, 300, 1000]
-const DISC_COUNTS = [1000, 10000, 100000, 250000]
+const SPHERE_COUNTS = [40, 100, 300, 1000, 2500, 5000]
+const DISC_COUNTS = [200, 500, 1000, 5000, 10000, 250000]
 
 const DEFAULT_COUNT: Record<LayoutMode, number> = {
   sphere: 40,

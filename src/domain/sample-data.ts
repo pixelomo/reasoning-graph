@@ -2,7 +2,7 @@
 import { Node, Edge, nodeId, edgeId } from './types'
 
 // mulberry32 generates distinct random numbers from a seed
-function mulberry32(a: number) {
+export function mulberry32(a: number) {
   return function () {
     // seed
     let t = (a += 0x6d2b79f5)

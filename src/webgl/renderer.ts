@@ -21,6 +21,7 @@ interface EdgeBuffers {
   end: WebGLBuffer
   startColor: WebGLBuffer
   endColor: WebGLBuffer
+  highlight: WebGLBuffer
 }
 
 export interface DrawOptions {
@@ -155,6 +156,7 @@ export class GraphRenderer {
       end: createBuffer(gl, geometry.edgeEnds),
       startColor: createBuffer(gl, geometry.edgeStartColors),
       endColor: createBuffer(gl, geometry.edgeEndColors),
+      highlight: createBuffer(gl, new Float32Array(geometry.edgeCount), gl.DYNAMIC_DRAW),
     }
 
     gl.bindVertexArray(this.edgeVAO)
@@ -163,7 +165,18 @@ export class GraphRenderer {
     setupInstancedAttribute(gl, 2, this.edgeBuffers.end, 3)
     setupInstancedAttribute(gl, 3, this.edgeBuffers.startColor, 3)
     setupInstancedAttribute(gl, 4, this.edgeBuffers.endColor, 3)
+    setupInstancedAttribute(gl, 5, this.edgeBuffers.highlight, 1)
     gl.bindVertexArray(null)
+  }
+
+  // Per-edge highlight flags (0 or 1), one per instance, computed on the CPU
+  // when the selection changes. Uploaded into the dynamic highlight buffer.
+  setHighlight(flags: Float32Array): void {
+    const gl = this.gl
+    if (!this.edgeBuffers || flags.length === 0) return
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.edgeBuffers.highlight)
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, flags)
+    gl.bindBuffer(gl.ARRAY_BUFFER, null)
   }
 
   draw(options: DrawOptions): void {
@@ -187,6 +200,10 @@ export class GraphRenderer {
       )
       gl.uniform1f(gl.getUniformLocation(this.edgeProgram, 'u_breathe'), options.breathe)
       gl.uniform1f(gl.getUniformLocation(this.edgeProgram, 'u_edgeAlpha'), options.edgeAlpha)
+      gl.uniform1i(
+        gl.getUniformLocation(this.edgeProgram, 'u_selected'),
+        options.selectedIndex,
+      )
       gl.bindVertexArray(this.edgeVAO)
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.edgeCount)
     }
@@ -259,6 +276,7 @@ export class GraphRenderer {
       gl.deleteBuffer(this.edgeBuffers.end)
       gl.deleteBuffer(this.edgeBuffers.startColor)
       gl.deleteBuffer(this.edgeBuffers.endColor)
+      gl.deleteBuffer(this.edgeBuffers.highlight)
       this.edgeBuffers = null
     }
   }

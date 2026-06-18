@@ -838,7 +838,7 @@ main {
   <aside class="sidebar" id="sidebar">
     <div class="graph-container">
       <div class="graph-label">Knowledge graph</div>
-      <svg class="graph" id="graph" viewBox="0 0 280 560" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg class="graph" id="graph" viewBox="0 0 280 700" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
     <div class="module-list" id="module-list"></div>
   </aside>
@@ -3204,6 +3204,1056 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
         explanation: 'Honesty wins because it matches what the CTO will find when they probe in the interview, and because Noeon explicitly values lifelong learning. Misrepresentation invites disappointment.'
       }
     ]
+  },
+
+  // ==========================================================================
+  // CODE DEEP-DIVES - the build sessions, file by file
+  // ==========================================================================
+  {
+    id: 'dd-corejs', tier: 'deepdive', group: 'Code deep-dives', short: 'JS patterns',
+    title: 'Core JavaScript <em>patterns</em>',
+    duration: 'language patterns',
+    content: `
+      <p>The Tier 1 page is the quick refresher. This is the working toolkit: the function and closure patterns, the array and async idioms, and the ES6+ features you reach for daily. Examples link back to where each shows up in the project.</p>
+      <h3>Functions: three forms, one idea</h3>
+      <pre><code>function declared(a, b) { return a + b }   // hoisted, has its own this
+const expr = function (a, b) { return a + b }  // not hoisted
+const arrow = (a, b) =&gt; a + b              // no own this, lexical
+
+function withDefaults(count = 10, ...rest) { /* default + rest params */ }</code></pre>
+      <p>Declarations are hoisted whole; expressions are not. Arrow functions have no own <code>this</code>, <code>arguments</code>, or <code>prototype</code>, they capture <code>this</code> lexically, which is why they are the right choice for callbacks and the wrong choice for object methods or constructors. <strong>Higher-order functions</strong> take or return other functions; <code>map</code>, <code>setTimeout</code>, and the <code>mulberry32</code> factory are all higher-order.</p>
+      <h3>Closures as a toolkit</h3>
+      <p>A closure is a function plus the variables from where it was defined. Once you see it as a tool rather than a trivia answer, the patterns appear everywhere:</p>
+      <pre><code>// 1. Private state (this is mulberry32 and useFps in the project)
+function counter() { let n = 0; return () =&gt; ++n }
+
+// 2. Factory: bake in configuration, return a specialised function
+function makeAdder(step) { return (x) =&gt; x + step }
+const inc = makeAdder(1)
+
+// 3. Memoize: cache results in a closed-over Map
+function memoize(fn) {
+  const cache = new Map()
+  return (arg) =&gt; cache.has(arg) ? cache.get(arg) : (cache.set(arg, fn(arg)), cache.get(arg))
+}</code></pre>
+      <p>In this codebase, <code>mulberry32(seed)</code> closes over the seed so each <code>prng()</code> advances private state, and <code>useFps()</code> closes over <code>frames</code> and <code>lastSample</code> so they survive between <code>tick</code> calls without being reactive.</p>
+      <h3>Currying and partial application</h3>
+      <pre><code>// Curried: a chain of one-argument functions
+const add = (a) =&gt; (b) =&gt; a + b
+add(5)(3)        // 8
+const add5 = add(5)   // partially applied, reuse later
+add5(3)          // 8
+
+// Partial application with bind
+const log = (level, msg) =&gt; console.log(\`[\${level}] \${msg}\`)
+const warn = log.bind(null, 'WARN')
+warn('low memory')   // [WARN] low memory</code></pre>
+      <p><strong>Currying</strong> turns <code>f(a, b)</code> into <code>f(a)(b)</code>. <strong>Partial application</strong> fixes some arguments now and supplies the rest later. Both lean on closures, and both let you configure a function once and reuse the specialised version, the pattern behind a lot of event handlers and middleware.</p>
+      <h3>Array methods: transform, do not mutate</h3>
+      <pre><code>nodes
+  .filter((n) =&gt; n.kind === 'concept')   // select
+  .map((n) =&gt; n.weight)                  // transform
+  .reduce((sum, w) =&gt; sum + w, 0)        // fold to one value</code></pre>
+      <p><code>map</code> / <code>filter</code> / <code>reduce</code> return new arrays or values and leave the original untouched, which is why they chain. The project uses <code>nodes.map((n) =&gt; n.id)</code> in the determinism test. Know which methods <strong>mutate</strong>: <code>push</code>, <code>pop</code>, <code>splice</code>, <code>sort</code>, <code>reverse</code> change in place; <code>map</code>, <code>filter</code>, <code>slice</code>, <code>concat</code>, <code>flatMap</code> do not. Mutating shared state in a <code>map</code> callback is a classic bug.</p>
+      <h3>Promises and async patterns</h3>
+      <pre><code>// Sequential: b waits for a even if it does not need to (slow)
+const a = await fetchA()
+const b = await fetchB()
+
+// Concurrent: both start at once, then await together (fast)
+const [a, b] = await Promise.all([fetchA(), fetchB()])
+
+// Resilient: never short-circuits on one rejection
+const results = await Promise.allSettled([fetchA(), fetchB()])</code></pre>
+      <p>A Promise is a value that settles later (fulfilled or rejected). <code>async</code> always returns a Promise; <code>await</code> pauses until one settles and throws on rejection, so wrap awaited calls in <code>try/catch</code>. The key senior habit: <strong>do not await in sequence what could run concurrently.</strong> <code>Promise.all</code> rejects as soon as any input rejects; <code>Promise.allSettled</code> waits for all and reports each outcome; <code>Promise.race</code> settles with the first to finish.</p>
+      <h3>ES6+ you reach for daily</h3>
+      <pre><code>// Destructuring with defaults and rename
+const { count = 0, mode: viewMode } = options
+const [first, ...others] = list
+
+// Spread: copy and merge without mutating
+const next = { ...state, selectedId: id }
+const merged = [...a, ...b]
+
+// Optional chaining + nullish coalescing
+const dpr = window.devicePixelRatio ?? 1
+const label = node?.label ?? 'untitled'
+
+// Template literals
+const id = \`node-\${i}\`
+
+// Modules
+import { useGraphStore } from '@/stores/graph-store'
+export function nodeId(raw) { /* ... */ }</code></pre>
+      <p>Spread for immutable updates (<code>{ ...state, field }</code>) is the same pattern Pinia and Vue reactivity reward: replace, do not mutate in place. <code>?.</code> stops at the first null/undefined instead of throwing; <code>??</code> falls back only on null/undefined, unlike <code>||</code> which also falls back on <code>0</code> and <code>''</code>. <code>Map</code> and <code>Set</code> (used in the renderer for <code>idToIndex</code> and the memoize example) beat plain objects when keys are not strings or insertion order matters.</p>
+      <div class="callout"><div class="callout-label">Senior signal</div>Naming currying vs partial application, knowing exactly which array methods mutate, and reaching for <code>Promise.all</code> instead of sequential awaits are the fluency markers an interviewer probes for. The trap question is almost always "would this run concurrently or one after another?"</div>
+    `,
+    quiz: [
+      {
+        q: 'const add = (a) => (b) => a + b. What does this technique enable, and what is add(5)?',
+        options: [
+          'Recursion; add(5) throws',
+          'Currying and partial application; add(5) returns a function that adds 5 to its argument',
+          'Memoization; add(5) caches the value 5',
+          'Hoisting; add(5) returns 5'
+        ],
+        correct: 1,
+        explanation: 'A chain of single-argument functions is currying. Calling add(5) partially applies the first argument and returns a reusable function (b) => 5 + b, both built on closures.'
+      },
+      {
+        q: 'Which of these returns a new array without mutating the original: push, sort, map, reverse?',
+        options: [
+          'push',
+          'map',
+          'sort',
+          'reverse'
+        ],
+        correct: 1,
+        explanation: 'map (like filter, slice, concat, flatMap) is non-mutating and returns a new array. push, sort, and reverse change the array in place, which is why they are a common source of shared-state bugs.'
+      },
+      {
+        q: 'You have two independent async calls. How does await a(); await b() differ from await Promise.all([a(), b()])?',
+        options: [
+          'There is no difference',
+          'The sequential version runs b only after a finishes; Promise.all starts both at once and waits together, which is faster for independent work',
+          'Promise.all runs them on separate threads',
+          'The sequential version is always safer'
+        ],
+        correct: 1,
+        explanation: 'Awaiting in sequence forces b to wait for a even when it does not depend on it. Promise.all kicks off both immediately and awaits the combined result, the concurrent pattern.'
+      },
+      {
+        q: 'const { count = 0 } = options. What does the = 0 do?',
+        options: [
+          'Assigns 0 to options.count',
+          'Provides a default used only when options.count is undefined',
+          'Forces count to always be 0',
+          'Throws if count is missing'
+        ],
+        correct: 1,
+        explanation: 'A destructuring default supplies a fallback when the extracted property is undefined. If options.count has any other value, including null or 0, that value is used instead (only undefined triggers the default).'
+      }
+    ]
+  },
+  {
+    id: 'dd-types', tier: 'deepdive', group: 'Code deep-dives', short: 'types.ts: the thread',
+    title: 'The discriminated-union <em>thread</em>',
+    duration: 'src/domain/types.ts',
+    content: `
+      <h3>One file, three jobs</h3>
+      <p><code>src/domain/types.ts</code> is 36 lines and it is the spine of the whole app. It does three things that surface everywhere downstream: it brands ids so they cannot be mixed up, it models <code>Node</code> and <code>Edge</code> as discriminated unions, and it proves exhaustiveness with <code>never</code>. The payoff: the <em>same</em> pattern that makes the compiler catch a missing case also drives the template in <code>NodeInspector.vue</code> and the mode buttons in <code>GraphControls.vue</code>.</p>
+      <h3>Lines 1-2: branded ids</h3>
+      <pre><code>export type NodeId = string & { readonly __brand: 'NodeId' }
+export type EdgeId = string & { readonly __brand: 'EdgeId' }</code></pre>
+      <p>Both are <code>string</code> at runtime. The <code>& { readonly __brand: ... }</code> intersection adds a phantom property that exists only in the type system. A plain <code>string</code> is not assignable to <code>NodeId</code>, so you cannot accidentally pass a raw string, or an <code>EdgeId</code>, where a <code>NodeId</code> is expected. Structural typing would normally make <code>type NodeId = string</code> transparent; the brand is the trick that makes it opaque.</p>
+      <h3>Lines 4-12: the two unions</h3>
+      <pre><code>export type Node =
+  | { kind: 'concept'; id: NodeId; label: string; weight: number }
+  | { kind: 'relation'; id: NodeId; from: NodeId; to: NodeId; strength: number }
+  | { kind: 'rule'; id: NodeId; premise: string[]; conclusion: string }</code></pre>
+      <p>Each variant carries a literal <code>kind</code>. That shared literal field is the <strong>discriminant</strong>. Once you test <code>node.kind</code>, TypeScript narrows the union to exactly one member and only that member's fields are in scope. <code>Edge</code> follows the same shape with <code>supports</code> / <code>contradicts</code> / <code>derives</code>.</p>
+      <h3>Lines 14-15: the cast helpers</h3>
+      <pre><code>export function nodeId(raw: string): NodeId { return raw as NodeId }
+export function edgeId(raw: string): EdgeId { return raw as EdgeId }</code></pre>
+      <p>The brand has to enter the system somewhere. <code>as NodeId</code> is the one unsafe escape hatch, so it is centralised in a single function rather than sprinkled across the codebase. One place to audit, one place to add runtime validation later.</p>
+      <h3>Lines 17-28: exhaustiveness via never</h3>
+      <pre><code>function assertNever(x: never): never {
+  throw new Error(\`Unhandled variant: \${JSON.stringify(x)}\`)
+}
+
+export function describeNode(node: Node): string {
+  switch (node.kind) {
+    case 'concept': return node.label
+    case 'relation': return \`\${node.from} -> \${node.to}\`
+    case 'rule': return node.conclusion
+    default: assertNever(node)
+  }
+}</code></pre>
+      <p><code>never</code> is the type with no values. In the <code>default</code> branch, if every <code>kind</code> has been handled, the only thing left is <code>never</code>, and <code>assertNever(node)</code> compiles. Add a fourth node variant and forget its case, and <code>node</code> in the default is no longer <code>never</code>: the compiler rejects the call. "I forgot a case" becomes a build error, not a production bug.</p>
+      <div class="callout">
+        <div class="callout-label">The thread that ties it together</div>
+        This one pattern does double, even triple duty. (1) <strong>Compile safety</strong>: the <code>never</code> switch in this file. (2) <strong>Template type-safety</strong>: <code>NodeInspector.vue</code> uses <code>v-if="selectedNode.kind === 'concept'"</code> and inside that block <code>.weight</code> and <code>.label</code> are known to exist, narrowed by the exact same discriminant. (3) <strong>UI state</strong>: <code>GraphControls.vue</code> uses the smaller literal union <code>LayoutMode = 'sphere' | 'disc'</code> with <code>:class="{ active: mode === 'sphere' }"</code> the same way. Learn the discriminated union once and you have the spine of the type layer, the inspector, and the controls.
+      </div>
+    `,
+    quiz: [
+      {
+        q: 'Why is NodeId declared as string & { readonly __brand: \'NodeId\' } rather than type NodeId = string?',
+        options: [
+          'It is faster at runtime',
+          'The brand adds a compile-only phantom field so a raw string or an EdgeId cannot be passed where a NodeId is expected',
+          'It lets NodeId hold non-string values',
+          'TypeScript requires a brand on every type alias'
+        ],
+        correct: 1,
+        explanation: 'A plain type alias is structurally transparent: any string satisfies it. The phantom __brand makes NodeId and EdgeId structurally distinct at compile time, while both remain plain strings at runtime.'
+      },
+      {
+        q: 'You add a fourth Node variant and forget to add its case to describeNode. What happens?',
+        options: [
+          'A runtime crash when that variant is passed',
+          'Nothing, the switch silently falls through',
+          'A compile error at assertNever(node), because node in the default is no longer narrowed to never',
+          'TypeScript adds the case automatically'
+        ],
+        correct: 2,
+        explanation: 'With the missing case, the default branch still sees the unhandled variant, so node is not never and assertNever(node) fails to type-check. The never default turns a forgotten case into a build error.'
+      },
+      {
+        q: 'NodeInspector.vue reads selectedNode.weight inside v-if="selectedNode.kind === \'concept\'". What makes .weight type-safe there?',
+        options: [
+          'Vue ignores type errors in templates',
+          'The kind check narrows the union to the concept variant, which has a weight field',
+          'weight exists on every Node variant',
+          'The brand on NodeId exposes weight'
+        ],
+        correct: 1,
+        explanation: 'The same discriminant that powers the never switch narrows the union in the template. Inside the concept branch the compiler knows the variant, so weight is in scope. Outside it, the full union has no weight on every member.'
+      }
+    ]
+  },
+  {
+    id: 'dd-store', tier: 'deepdive', group: 'Code deep-dives', short: 'graph-store.ts',
+    title: 'The Pinia store, <em>line by line</em>',
+    duration: 'src/stores/graph-store.ts',
+    content: `
+      <h3>The setup-store signature</h3>
+      <pre><code>export const useGraphStore = defineStore('graph', () =&gt; {
+  ...
+  return { ... }
+})</code></pre>
+      <p>Setup-store syntax: the second argument is a function, not an options object. Whatever you <code>return</code> becomes the store's public surface. How each value is <em>declared</em> decides its category: <code>ref</code> / <code>shallowRef</code> become state, <code>computed</code> become getters, plain functions become actions.</p>
+      <h3>State: the shallowRef decision</h3>
+      <pre><code>const nodes = shallowRef&lt;Node[]&gt;([])
+const edges = shallowRef&lt;Edge[]&gt;([])
+const selectedNodeId = ref&lt;NodeId | null&gt;(null)
+const mode = ref&lt;LayoutMode&gt;('sphere')
+const seed = ref(1)</code></pre>
+      <p><code>nodes</code> and <code>edges</code> can hold 100k+ objects, and the update pattern is always whole-array replacement (<code>nodes.value = newArray</code>), never in-place mutation of one element. <code>shallowRef</code> tracks only reassignment of <code>.value</code>; it does not proxy every element. A plain <code>ref</code> would wrap all 100k objects in reactive proxies on assignment, the performance cliff. The scalars (<code>selectedNodeId</code>, <code>mode</code>, <code>seed</code>) are plain <code>ref</code>s because deep-tracking a single value costs nothing.</p>
+      <div class="callout warn"><div class="callout-label">The trade-off you accept</div>With shallowRef, mutating a node in place (<code>nodes.value[0].label = 'x'</code>) changes the data but fires no reactivity: a stale view over correct data. It is safe here precisely because the code never mutates in place.</div>
+      <h3>Privacy: seed is never returned</h3>
+      <p><code>seed</code> is declared but not in the returned object. In a setup store, anything you do not return is private. Only <code>regenerate</code> and <code>setMode</code> touch it. In TS strict mode, a consumer calling <code>store.seed</code> is a compile error, not a runtime <code>undefined</code>. The options API cannot express this kind of private member easily.</p>
+      <h3>Getters: computed, not cached refs</h3>
+      <pre><code>const selectedNode = computed(() =&gt;
+  nodes.value.find((n) =&gt; n.id === selectedNodeId.value) ?? null)
+const nodeCount = computed(() =&gt; nodes.value.length)
+const edgeCount = computed(() =&gt; edges.value.length)</code></pre>
+      <p><code>selectedNode</code> derives from both <code>selectedNodeId</code> and <code>nodes</code>. As a <code>computed</code> it re-derives automatically whenever either changes. The killer alternative is a manual <code>ref</code> you re-sync by hand: <code>regenerate</code> swaps the whole array, and a manual cache would hold a stale node from the old array. A computed has no cache to invalidate.</p>
+      <h3>Actions: single responsibility</h3>
+      <pre><code>function regenerate(count: number): void {
+  seed.value += 1
+  const graph = generateSampleGraph(count, seed.value)
+  nodes.value = graph.nodes
+  edges.value = graph.edges
+  selectedNodeId.value = null
+}
+
+function setMode(next: LayoutMode): void {
+  if (mode.value === next) return
+  mode.value = next
+}</code></pre>
+      <p><code>setMode</code> does exactly one thing: set the mode. An earlier version also regenerated the graph and hardcoded node counts, three responsibilities in one action, and it violated data/layout separation, toggling the view nuked the graph and the selection. The fix split the jobs: count lives in <code>regenerate(count)</code>; "switching view usually wants a different count" is UI policy that lives at the call site in <code>GraphControls.vue</code>; and re-placing existing nodes on a mode change is the renderer's job. A store action should do one thing and should not encode UI policy.</p>
+      <div class="callout"><div class="callout-label">How consumers read it</div>Components pull state with <code>const { mode, nodeCount } = storeToRefs(store)</code> to keep reactivity, and call actions straight off the store (<code>store.regenerate(...)</code>) because functions need no ref wrapper. See the GraphControls and NodeInspector deep-dives for both halves in action.</div>
+    `,
+    quiz: [
+      {
+        q: 'Why is nodes a shallowRef but mode a plain ref?',
+        options: [
+          'shallowRef is required for arrays',
+          'nodes can hold 100k objects updated by whole-array replacement, so deep proxying them is the perf cliff; mode is a single scalar where deep tracking is free',
+          'mode changes more often than nodes',
+          'There is no real difference, it is style'
+        ],
+        correct: 1,
+        explanation: 'shallowRef tracks only .value reassignment, which is exactly the nodes update pattern, so it skips proxying every element. A scalar like mode has nothing to deep-track, so a plain ref is correct.'
+      },
+      {
+        q: 'selectedNode is a computed. Why not a ref you assign inside selectNode?',
+        options: [
+          'computed is faster to write',
+          'A manual ref would be a cache you must re-sync everywhere; regenerate swaps the whole array and would leave a stale node reference. A computed re-derives with nothing to invalidate',
+          'refs cannot hold objects',
+          'Pinia forbids refs for derived state'
+        ],
+        correct: 1,
+        explanation: 'Derived state as a computed has a single source of truth and no invalidation step. A manual cache is an obligation you will eventually forget, most dangerously at regenerate.'
+      },
+      {
+        q: 'seed is declared but not returned. A component writes store.seed = 9. What happens?',
+        options: [
+          'It silently works',
+          'It is a compile error in TS strict mode, because seed is private to the store (unreturned)',
+          'It resets the graph',
+          'It throws at runtime'
+        ],
+        correct: 1,
+        explanation: 'In a setup store, only returned members are public. seed is never returned, so it is private, and accessing it from outside is a compile-time error, not a runtime undefined.'
+      }
+    ]
+  },
+  {
+    id: 'dd-controls', tier: 'deepdive', group: 'Code deep-dives', short: 'GraphControls.vue',
+    title: 'GraphControls.vue, <em>data down, events up</em>',
+    duration: 'src/components/GraphControls.vue',
+    content: `
+      <h3>What this component is for</h3>
+      <p>Two button groups: view mode (Sphere / Graph) and node count. It is a <strong>smart</strong> component: it reads and writes the store directly rather than taking props, because it only makes sense inside this app.</p>
+      <h3>Reading store state</h3>
+      <pre><code>const store = useGraphStore()
+const { mode, nodeCount } = storeToRefs(store)</code></pre>
+      <p><code>storeToRefs</code> is the key line. <code>const { mode } = store</code> would copy the current value into a dead variable, reactivity lives in the store proxy. <code>storeToRefs</code> wraps each state field in a live <code>ref</code> so the template re-renders when the store changes. Actions are <em>not</em> wrapped; they are called off <code>store</code> directly.</p>
+      <h3>The mode literal union, the discriminant pattern again</h3>
+      <pre><code>import type { LayoutMode } from '@/webgl/layout'
+
+const DEFAULT_COUNT: Record&lt;LayoutMode, number&gt; = {
+  sphere: 40,
+  disc: 1000,
+}</code></pre>
+      <p><code>LayoutMode</code> is <code>'sphere' | 'disc'</code>, a small string-literal union, the lightweight cousin of the <code>Node.kind</code> discriminated union. <code>Record&lt;LayoutMode, number&gt;</code> forces an entry for <em>every</em> mode; add a third mode and this object stops compiling until you handle it. Same exhaustiveness guarantee as the <code>never</code> switch in <code>types.ts</code>, expressed through a mapped type instead of a switch.</p>
+      <h3>The selectMode handler, where UI policy lives</h3>
+      <pre><code>function selectMode(next: LayoutMode): void {
+  if (next === mode.value) return
+  store.setMode(next)
+  store.regenerate(DEFAULT_COUNT[next])
+}</code></pre>
+      <p>This is the deliberate consequence of the store refactor. The store's <code>setMode</code> only sets the mode. The policy "switching to sphere usually wants 40 nodes, switching to disc wants 1000" lives <em>here</em>, at the call site, as an explicit <code>setMode</code> + <code>regenerate</code> pair. The early-return guards against regenerating when the mode did not actually change.</p>
+      <h3>Template: binding, class toggles, the v-for key</h3>
+      <pre><code>&lt;button type="button" :class="{ active: mode === 'sphere' }"
+        @click="selectMode('sphere')"&gt;Sphere&lt;/button&gt;
+
+&lt;button
+  v-for="count in counts"
+  :key="count"
+  :class="{ active: count === nodeCount }"
+  @click="store.regenerate(count)"
+&gt;{{ count.toLocaleString('en-US') }}&lt;/button&gt;</code></pre>
+      <p>Notice: <code>:class="{ active: ... }"</code> toggles a class declaratively off reactive state, no manual DOM. <code>type="button"</code> (no colon) is a literal string; <code>:key</code> (colon) is a JS expression. <code>counts</code> is a <code>computed</code> returning the sphere list or disc list depending on <code>mode</code>, so the buttons swap when you change view. The click handler calls the store action directly, the "events up" side: the component does not own the data, it asks the store to change it.</p>
+      <div class="callout"><div class="callout-label">Data down, events up</div>State flows one way. <code>GraphControls</code> reads <code>mode</code> / <code>nodeCount</code> from the store (down) and calls actions to request changes (up). It never mutates store state directly, which is why you can always tell where a change came from.</div>
+    `,
+    quiz: [
+      {
+        q: 'Why does GraphControls use storeToRefs(store) for mode instead of const { mode } = store?',
+        options: [
+          'storeToRefs is shorter',
+          'A plain destructure copies the current value into a dead variable and loses reactivity; storeToRefs wraps state in a live ref so the template updates',
+          'store cannot be destructured at all',
+          'It is required for actions'
+        ],
+        correct: 1,
+        explanation: 'Reactivity lives in the store proxy. Destructuring reads a snapshot. storeToRefs returns live refs for state and getters; actions are taken straight off the store because functions need no wrapper.'
+      },
+      {
+        q: 'Why does the 40/1000 default-count policy live in selectMode rather than in store.setMode?',
+        options: [
+          'It is a performance optimisation',
+          'setMode is deliberately single-responsibility; node-count-per-view is UI policy that belongs at the call site, not in the store',
+          'Pinia actions cannot call other actions',
+          'The store has no access to the counts'
+        ],
+        correct: 1,
+        explanation: 'An earlier setMode set the mode AND regenerated AND hardcoded counts. The refactor made setMode do one thing; the "view usually wants N nodes" decision is UI policy expressed as an explicit setMode + regenerate pair here.'
+      },
+      {
+        q: 'What does Record<LayoutMode, number> enforce on DEFAULT_COUNT?',
+        options: [
+          'That the values are positive',
+          'That there is exactly one entry for every member of LayoutMode, failing to compile if a mode is missing',
+          'That the object is readonly',
+          'Nothing, it is documentation'
+        ],
+        correct: 1,
+        explanation: 'A Record over a literal union is a compile-time exhaustiveness check: every key must be present. Add a third LayoutMode and the object no longer type-checks until you supply its default, the same guarantee as a never switch.'
+      }
+    ]
+  },
+  {
+    id: 'dd-inspector', tier: 'deepdive', group: 'Code deep-dives', short: 'NodeInspector.vue',
+    title: 'NodeInspector.vue, <em>the narrowing payoff</em>',
+    duration: 'src/components/NodeInspector.vue',
+    content: `
+      <h3>The whole component is one computed plus narrowing</h3>
+      <pre><code>const store = useGraphStore()
+const { selectedNode } = storeToRefs(store)</code></pre>
+      <p><code>selectedNode</code> is the store computed from the Pinia deep-dive. The component does no logic of its own; it renders whatever the computed produces. When the user clicks a node, picking updates <code>selectedNodeId</code>, the computed re-derives, and this panel updates, no manual wiring.</p>
+      <h3>Null narrowing first</h3>
+      <pre><code>&lt;p v-if="!selectedNode" class="empty"&gt;No node selected.&lt;/p&gt;
+&lt;dl v-else class="details"&gt; ... &lt;/dl&gt;</code></pre>
+      <p><code>selectedNode</code> is <code>Node | null</code>. The <code>v-if="!selectedNode"</code> / <code>v-else</code> split means that inside the <code>v-else</code> branch TypeScript knows <code>selectedNode</code> is non-null. Same narrowing machinery as the discriminant, applied to <code>null</code>.</p>
+      <h3>The discriminant payoff in a template</h3>
+      <pre><code>&lt;template v-if="selectedNode.kind === 'concept'"&gt;
+  &lt;dt&gt;Weight&lt;/dt&gt;&lt;dd&gt;{{ selectedNode.weight.toFixed(3) }}&lt;/dd&gt;
+&lt;/template&gt;
+&lt;template v-else-if="selectedNode.kind === 'rule'"&gt;
+  &lt;dt&gt;Conclusion&lt;/dt&gt;&lt;dd&gt;{{ selectedNode.conclusion }}&lt;/dd&gt;
+&lt;/template&gt;
+&lt;template v-else&gt;
+  &lt;dt&gt;Strength&lt;/dt&gt;&lt;dd&gt;{{ selectedNode.strength.toFixed(3) }}&lt;/dd&gt;
+&lt;/template&gt;</code></pre>
+      <p>This is the exact payoff promised in the types deep-dive. <code>selectedNode.weight</code> only type-checks because the surrounding <code>v-if="selectedNode.kind === 'concept'"</code> narrowed the union to the <code>concept</code> variant. Move <code>{{ selectedNode.weight }}</code> outside that block and the build fails: on the full union, <code>weight</code> does not exist on every member. <code>&lt;template&gt;</code> is the wrapper so the grouping adds no extra DOM node.</p>
+      <h3>Clearing selection, events up again</h3>
+      <pre><code>&lt;button v-if="selectedNode" @click="store.clearSelection()"&gt;Clear selection&lt;/button&gt;</code></pre>
+      <p>Like GraphControls, the inspector requests a change by calling a store action; it never writes <code>selectedNodeId</code> itself.</p>
+      <div class="callout"><div class="callout-label">Why this is the showpiece for the type system</div>The same <code>kind</code> field that powers the <code>never</code> exhaustiveness check in <code>types.ts</code> is what makes this template safe. One concept, two payoffs: the compiler catches a missing case in the switch, and the editor autocompletes the right fields inside each <code>v-if</code> branch.</div>
+    `,
+    quiz: [
+      {
+        q: 'You move {{ selectedNode.weight }} outside the v-if="selectedNode.kind === \'concept\'" block. What happens?',
+        options: [
+          'Nothing, it still renders',
+          'A compile error: outside the check selectedNode is the full union and weight does not exist on every member',
+          'A runtime undefined',
+          'Vue throws a hydration warning'
+        ],
+        correct: 1,
+        explanation: 'Only the kind check narrows the union to the concept variant. Outside it, selectedNode is Node | null, and weight is not present on relation or rule, so the template fails to type-check.'
+      },
+      {
+        q: 'Why use <template v-if> to wrap the dt/dd pairs rather than a <div v-if>?',
+        options: [
+          'template renders faster',
+          'template groups several elements under one condition without adding a wrapper DOM node',
+          'div cannot use v-if',
+          'It is required inside a dl'
+        ],
+        correct: 1,
+        explanation: 'A template element is a phantom fragment: it applies the condition to its children but emits no element of its own, which matters inside a dl where a stray div would break the layout.'
+      },
+      {
+        q: 'A node is clicked and the inspector updates, yet the component has no watcher. How?',
+        options: [
+          'Vue polls the store every frame',
+          'selectedNode is a store computed; picking sets selectedNodeId, the computed re-derives, and the template reactively re-renders',
+          'NodeInspector emits an event to itself',
+          'The renderer calls a method on the component'
+        ],
+        correct: 1,
+        explanation: 'storeToRefs keeps selectedNode reactive. When selectedNodeId changes, the computed recomputes and any template reading it updates automatically. No manual subscription needed.'
+      }
+    ]
+  },
+  {
+    id: 'dd-canvas', tier: 'deepdive', group: 'Code deep-dives', short: 'GraphCanvas.vue',
+    title: 'GraphCanvas.vue, <em>the orchestrator</em>',
+    duration: 'src/components/GraphCanvas.vue',
+    content: `
+      <h3>The component that wires everything together</h3>
+      <p>This is the largest component and the one that composes the others: it owns the canvas, the renderer, the render loop, and three composables. It is where Vue's lifecycle meets imperative WebGL.</p>
+      <h3>The template ref and the strict-null guard</h3>
+      <pre><code>const canvasEl = ref&lt;HTMLCanvasElement | null&gt;(null)
+// template: &lt;canvas ref="canvasEl"&gt;&lt;/canvas&gt;</code></pre>
+      <p>The variable name must match the <code>ref="canvasEl"</code> string. It is <code>null</code> during <code>setup</code> (the DOM does not exist yet) and Vue assigns the real element at mount. The <code>| null</code> in the type forces the <code>if (!canvas) return</code> guard before any WebGL call, which is why the context is grabbed in <code>onMounted</code>, not in setup.</p>
+      <h3>Composables compose</h3>
+      <pre><code>const camera = useCamera()
+const { fps, tick } = useFps()
+usePicking({ canvas: canvasEl, dpr: () =&gt; dpr, pickAt: ..., onPick: ... })</code></pre>
+      <p>Three composables, three roles. <code>useCamera</code> returns reactive camera state plus matrix helpers. <code>useFps</code> returns an <code>fps</code> ref and a <code>tick</code> driven by the loop. <code>usePicking</code> registers its own pointer listeners and calls back on a click. Each is independent reactive state, which is exactly why they are composables and not a shared store: two canvases would each want their own camera.</p>
+      <h3>onMounted: imperative setup</h3>
+      <pre><code>onMounted(() =&gt; {
+  const canvas = canvasEl.value
+  if (!canvas) return
+  const gl = canvas.getContext('webgl2', { antialias: true, premultipliedAlpha: false })
+  if (!gl) { error.value = 'WebGL2 is not available...'; return }
+  renderer = new GraphRenderer(gl)
+  resize()
+  if (store.nodeCount === 0) store.regenerate(300)
+  else rebuildGeometry(currentTime())
+  window.addEventListener('resize', resize)
+  // ...pointer + wheel listeners...
+  frame = requestAnimationFrame(renderLoop)
+})</code></pre>
+      <p>Everything that needs the real DOM element lives here: get the context, build the renderer, size the drawing buffer, seed the graph if empty, attach listeners, start the loop.</p>
+      <h3>watch: bridging reactive store to imperative GPU</h3>
+      <pre><code>watch([nodes, edges, mode], () =&gt; rebuildGeometry(currentTime()))</code></pre>
+      <p>This is the seam between the reactive world and WebGL. When the store's <code>nodes</code>, <code>edges</code>, or <code>mode</code> change, <code>rebuildGeometry</code> recomputes the layout and re-uploads buffers. Note <code>mode</code> is in the watch list: this is where "re-place existing nodes on a mode change" actually happens, the responsibility the store's <code>setMode</code> deliberately gave up.</p>
+      <h3>onUnmounted: the cleanup symmetry</h3>
+      <pre><code>onUnmounted(() =&gt; {
+  cancelAnimationFrame(frame)
+  window.removeEventListener('resize', resize)
+  // ...remove every listener added on mount...
+  renderer?.dispose()
+  renderer = null
+})</code></pre>
+      <p>Every listener added in <code>onMounted</code> is removed here, the animation frame is cancelled, and the renderer's GPU resources are freed via <code>dispose()</code>. Skip this and you leak GL contexts and keep a dead render loop running, the classic "why is my fan spinning after I navigate away" bug.</p>
+      <div class="callout"><div class="callout-label">Why mutable lets, not refs, for renderer/frame</div><code>renderer</code>, <code>frame</code>, <code>dragging</code> and the loop's timing vars are plain <code>let</code>s, not <code>ref</code>s. Nothing in the template reads them, so making them reactive would be pure overhead, the same rule that keeps <code>frames</code> non-reactive in <code>useFps</code>.</div>
+    `,
+    quiz: [
+      {
+        q: 'Why is the WebGL2 context obtained in onMounted rather than in setup?',
+        options: [
+          'setup cannot call browser APIs',
+          'canvasEl is null during setup; the DOM element only exists once the component is mounted',
+          'getContext is async',
+          'Pinia is not ready in setup'
+        ],
+        correct: 1,
+        explanation: 'A template ref is null through setup and assigned at mount. Touching canvasEl.value before then gives null, so context creation and the | null guard belong in onMounted.'
+      },
+      {
+        q: 'The component watches [nodes, edges, mode]. Why does the renderer react to mode changes instead of the store regenerating inside setMode?',
+        options: [
+          'It is a workaround for a Pinia bug',
+          'Layout is a pure function of nodes + mode, so re-placing existing nodes on a mode change is the renderer\'s job, not a reason to rebuild the data',
+          'mode changes are too frequent for the store',
+          'The store has no access to nodes'
+        ],
+        correct: 1,
+        explanation: 'Data and layout are separate concerns. Changing the view mode should not regenerate the graph data; it should re-place the same nodes. That belongs in the renderer, which is why the component watches mode.'
+      },
+      {
+        q: 'Why are renderer and frame plain let variables rather than refs?',
+        options: [
+          'refs cannot hold class instances',
+          'Nothing in the template reads them, so making them reactive would be needless tracking overhead',
+          'let is faster than ref for all values',
+          'They change too often to be reactive'
+        ],
+        correct: 1,
+        explanation: 'Reactive only what the view consumes. The renderer and the rAF handle are internal machinery the template never reads, so plain lets are correct and avoid wasted reactivity.'
+      }
+    ]
+  },
+  {
+    id: 'dd-stats', tier: 'deepdive', group: 'Code deep-dives', short: 'StatsOverlay + useFps',
+    title: 'StatsOverlay and useFps, <em>dumb component, lean composable</em>',
+    duration: 'StatsOverlay.vue + composables/useFps.ts',
+    content: `
+      <h3>StatsOverlay: the one dumb component</h3>
+      <pre><code>defineProps&lt;{ fps: number; nodeCount: number; edgeCount: number }&gt;()</code></pre>
+      <p>Every other component reads the store; this one takes props. That is deliberate: it is generic, a little stats HUD you could drop into any app. The rule is "could this be reused in a different app?" If yes, props; if it only makes sense here, read the store. <code>defineProps</code> is a compiler macro, no import, legal only at the top level of <code>&lt;script setup&gt;</code>, and props are read-only.</p>
+      <p>The type-only generic form <code>defineProps&lt;{...}&gt;()</code> is the TS idiom. The component also has a pure <code>format</code> helper, a plain function, not a composable, because it holds no reactive state and uses no lifecycle.</p>
+      <h3>useFps: reactive only what the view consumes</h3>
+      <pre><code>export function useFps(): { fps: Ref&lt;number&gt;; tick: (now: number) =&gt; void } {
+  const fps = ref(0)
+  let frames = 0
+  let lastSample = 0
+  function tick(now: number): void {
+    frames += 1
+    if (lastSample === 0) { lastSample = now; return }
+    const elapsed = now - lastSample
+    if (elapsed &gt;= 500) {
+      fps.value = Math.round((frames * 1000) / elapsed)
+      frames = 0
+      lastSample = now
+    }
+  }
+  onUnmounted(() =&gt; { frames = 0; lastSample = 0 })
+  return { fps, tick }
+}</code></pre>
+      <p>Only <code>fps</code> is a <code>ref</code>, because it is the one value the overlay renders. <code>frames</code> and <code>lastSample</code> are plain closure variables: the loop updates them many times a second, and making them reactive would fire tracking for nothing. The composable <em>measures</em>; the render loop <em>drives</em> it by calling <code>tick(now)</code> each frame. It samples every 500ms rather than every frame so the number is readable instead of jittering.</p>
+      <div class="callout"><div class="callout-label">Composable vs utility, the test</div>Does it hold reactive state or use lifecycle hooks? Then it is a composable and must be called in setup, <code>useFps</code> qualifies on both counts (<code>ref</code> + <code>onUnmounted</code>). Pure input to output, like <code>format()</code> or a date formatter? Utility. The <code>use</code> prefix is convention, not magic.</div>
+    `,
+    quiz: [
+      {
+        q: 'Why does StatsOverlay take props while GraphControls reads the store directly?',
+        options: [
+          'Props are always preferred in Vue 3',
+          'StatsOverlay is generic and reusable in any app, so it takes props; GraphControls is app-specific, so it reads the store',
+          'StatsOverlay is a child of GraphControls',
+          'The store cannot expose fps'
+        ],
+        correct: 1,
+        explanation: 'The smart-vs-dumb call hinges on reusability. A generic HUD is decoupled via props; an app-specific control couples to the store. "Could it be reused elsewhere?" is the deciding question.'
+      },
+      {
+        q: 'In useFps, why is fps a ref but frames a plain let?',
+        options: [
+          'frames is a string',
+          'Only fps is read by the view; frames updates every frame and making it reactive would fire tracking for nothing',
+          'refs cannot hold counters',
+          'frames must persist across unmounts'
+        ],
+        correct: 1,
+        explanation: 'Reactive only what the view consumes. fps is rendered, so it is a ref. frames is internal accounting updated dozens of times a second; a plain closure variable avoids pointless reactivity.'
+      },
+      {
+        q: 'What makes useFps a composable rather than a utility function?',
+        options: [
+          'The use prefix in its name',
+          'It holds reactive state (a ref) and registers a lifecycle hook (onUnmounted), so it must be called in setup',
+          'It returns an object',
+          'It takes a number argument'
+        ],
+        correct: 1,
+        explanation: 'The prefix is convention. What makes it a composable is the reactive state plus the lifecycle hook, which is why it has to run inside a component setup. A pure in-to-out helper would be a utility.'
+      }
+    ]
+  },
+  {
+    id: 'dd-renderer', tier: 'deepdive', group: 'Code deep-dives', short: 'renderer.ts',
+    title: 'renderer.ts, <em>a class over a state machine</em>',
+    duration: 'src/webgl/renderer.ts',
+    content: `
+      <h3>Why a class wraps the GL context</h3>
+      <p>WebGL is one big global state machine: <code>useProgram</code>, <code>bindBuffer</code>, <code>bindVertexArray</code> all persist until changed. <code>GraphRenderer</code> wraps that mutable state behind a clean surface, the constructor builds programs and buffers, and the only public methods are <code>resize</code>, <code>upload</code>, <code>draw</code>, <code>pick</code>, and <code>dispose</code>. The Vue side never touches raw GL.</p>
+      <h3>Constructor: build once</h3>
+      <pre><code>this.nodeProgram = createProgram(gl, nodeVert, nodeFrag)
+this.edgeProgram = createProgram(gl, edgeVert, edgeFrag)
+this.pickProgram = createProgram(gl, pickingVert, pickingFrag)
+this.nodeVAO = this.createVAO()
+this.edgeVAO = this.createVAO()
+// ...quad buffers, picking framebuffer...
+gl.enable(gl.BLEND)
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)</code></pre>
+      <p>Three shader programs (nodes, edges, picking), two VAOs, the quad buffers, and the picking framebuffer are created once. A <strong>VAO</strong> (vertex array object) captures the whole attribute-binding setup; bind one VAO at draw time and all the attribute state comes back at once, this is what tames the state machine.</p>
+      <h3>upload: the reactive seam, GPU side</h3>
+      <pre><code>upload(geometry: GraphGeometry): void {
+  this.disposeGeometryBuffers()
+  this.nodeBuffers = { offset: createBuffer(...), color: ..., radius: ..., birth: ... }
+  gl.bindVertexArray(this.nodeVAO)
+  setupVertexAttribute(gl, 0, this.nodeQuad, 2)
+  setupInstancedAttribute(gl, 1, this.nodeBuffers.offset, 3)
+  // ...
+}</code></pre>
+      <p>Called from the component's <code>watch</code> whenever the graph changes. Note <code>disposeGeometryBuffers()</code> runs first, old GPU buffers are deleted before new ones are uploaded, so regenerating 250k nodes a dozen times does not leak memory.</p>
+      <h3>draw: two passes, one call each</h3>
+      <p>Edges first, then nodes, each a single <code>gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, count)</code>. The uniforms (matrices, time, selected index) are set per draw call; the per-node data rides in instanced attributes. See the instancing deep-dive for why this is one call instead of N.</p>
+      <h3>dispose: the cleanup the component calls</h3>
+      <pre><code>dispose(): void {
+  this.disposeGeometryBuffers()
+  gl.deleteBuffer(this.nodeQuad) // ...
+  gl.deleteVertexArray(this.nodeVAO) // ...
+  gl.deleteFramebuffer(this.pickFbo); gl.deleteTexture(this.pickTexture)
+  gl.deleteProgram(this.nodeProgram) // ...
+}</code></pre>
+      <p>Every GPU resource the constructor created is released here. <code>GraphCanvas.vue</code> calls this in <code>onUnmounted</code>. GPU resources are not garbage-collected the way JS objects are, so explicit disposal is mandatory.</p>
+      <div class="callout warn"><div class="callout-label">State-machine gotcha this file handles</div>The <code>pick</code> pass disables blending and swaps the clear colour, then restores both afterward, because leaving the state changed would corrupt the next normal frame. Forgetting to restore global GL state is the single largest source of mysterious WebGL bugs.</div>
+    `,
+    quiz: [
+      {
+        q: 'What does a Vertex Array Object (VAO) capture?',
+        options: [
+          'The shader source code',
+          'The full vertex-attribute binding state, so binding one VAO restores all attribute setup at once',
+          'The framebuffer contents',
+          'The uniform values'
+        ],
+        correct: 1,
+        explanation: 'A VAO records which buffers are bound to which attribute locations and their layout. Binding it re-establishes the whole vertex setup in one call, which is how the renderer keeps the global state machine manageable.'
+      },
+      {
+        q: 'Why does upload() call disposeGeometryBuffers() before creating new buffers?',
+        options: [
+          'To reset the camera',
+          'To delete the previous GPU buffers so repeated regeneration does not leak GPU memory',
+          'Because WebGL requires it',
+          'To clear the screen'
+        ],
+        correct: 1,
+        explanation: 'Each regenerate uploads fresh buffers. Without deleting the old ones first, every regenerate would orphan GPU allocations. Disposing first keeps memory flat no matter how many times the graph is rebuilt.'
+      },
+      {
+        q: 'Why does the renderer need an explicit dispose() called from onUnmounted?',
+        options: [
+          'To save the graph state',
+          'GPU resources (buffers, textures, programs, VAOs) are not garbage-collected; they must be deleted manually or they leak',
+          'To stop the Vue component',
+          'To reset the store'
+        ],
+        correct: 1,
+        explanation: 'JS garbage collection does not reclaim WebGL objects. The renderer must delete each one it created. Pairing dispose() with onUnmounted ties the GPU lifetime to the component lifetime.'
+      }
+    ]
+  },
+  {
+    id: 'dd-instancing', tier: 'deepdive', group: 'Code deep-dives', short: 'instancing.ts',
+    title: 'Instancing, <em>one draw call for N nodes</em>',
+    duration: 'src/webgl/instancing.ts + shaders/node.ts',
+    content: `
+      <h3>The problem instancing solves</h3>
+      <p>One draw call per node means 100k draw calls per frame, far past the ~1-2k budget browsers handle at 60fps. The cost is CPU-side API overhead, not GPU work. Instancing collapses N nodes into a single draw call.</p>
+      <h3>The two attribute setups</h3>
+      <pre><code>export function setupVertexAttribute(gl, location, buffer, size): void {
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+  gl.enableVertexAttribArray(location)
+  gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0)
+  gl.vertexAttribDivisor(location, 0)   // advance per VERTEX
+}
+
+export function setupInstancedAttribute(gl, location, buffer, size): void {
+  // ...same bind + pointer...
+  gl.vertexAttribDivisor(location, 1)   // advance per INSTANCE
+}</code></pre>
+      <p>The only difference is the <strong>divisor</strong>. Divisor <code>0</code>: the attribute advances once per vertex, used for the shared quad corners every node reuses. Divisor <code>1</code>: it advances once per instance, used for per-node data (offset, colour, radius, birth time). Forget the divisor and every node reads the same element, or the buffer runs off its end.</p>
+      <h3>How the shader uses it</h3>
+      <pre><code>layout(location = 0) in vec2 a_corner;   // per vertex (divisor 0)
+layout(location = 1) in vec3 a_offset;   // per instance (divisor 1)
+layout(location = 3) in float a_radius;
+// ...
+vec4 mv = u_modelView * vec4(a_offset * u_breathe, 1.0);
+mv.xy += a_corner * a_radius * age * pulse;
+gl_Position = u_proj * mv;</code></pre>
+      <p>The same 6-vertex quad (<code>a_corner</code>) is reused for every node; <code>a_offset</code> and <code>a_radius</code> change per node. The vertex shader places the node centre, then pushes the corner out by the radius, a billboarded quad that always faces the camera. <code>gl_InstanceID</code> is how the shader knows which node it is drawing, used to compare against <code>u_selected</code> for the selection pulse.</p>
+      <h3>The draw call</h3>
+      <pre><code>gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.nodeCount)</code></pre>
+      <p>Six vertices, <code>nodeCount</code> instances, one call. This is the line that lets the FPS counter stay at 60 while the node count climbs to six figures.</p>
+      <div class="callout"><div class="callout-label">Edges reuse the exact same pattern</div>Edges are instanced quads too, not <code>gl.LINES</code> (line width is unreliable across drivers). Same divisor-1 setup, different per-instance data: start position, end position, endpoint colours. The vertex shader stretches a unit quad along the line. One pattern, two primitives.</div>
+    `,
+    quiz: [
+      {
+        q: 'The only difference between setupVertexAttribute and setupInstancedAttribute is the divisor. What do 0 and 1 mean?',
+        options: [
+          'They set the buffer size',
+          'Divisor 0 advances the attribute once per vertex (the shared quad); divisor 1 advances once per instance (per-node data)',
+          'They enable or disable the attribute',
+          'They pick the shader stage'
+        ],
+        correct: 1,
+        explanation: 'vertexAttribDivisor controls how often an attribute steps through its buffer. 0 = per vertex, so the quad corners repeat for every node; 1 = per instance, so each node reads its own offset, colour, and radius.'
+      },
+      {
+        q: 'Why does a naive renderer drop from 60fps to 5fps from 100 to 10k nodes, but the instanced one does not?',
+        options: [
+          'GPU memory runs out',
+          'Naive uses one draw call per node, past the per-frame draw-call budget; instancing issues one call regardless of node count',
+          'The shaders get more complex',
+          'Texture uploads dominate'
+        ],
+        correct: 1,
+        explanation: 'The bottleneck is CPU-side draw-call overhead, not GPU shading. Collapsing N calls into one drawArraysInstanced removes the cliff entirely.'
+      },
+      {
+        q: 'Why are edges drawn as instanced quads rather than gl.LINES?',
+        options: [
+          'Lines are slower to draw',
+          'WebGL line width is unreliable and capped at 1px on most drivers; quads give controllable thickness and anti-aliasing',
+          'gl.LINES cannot be instanced',
+          'Quads use less memory'
+        ],
+        correct: 1,
+        explanation: 'gl.lineWidth above 1 is ignored on most platforms, so edges are built as thin instanced quads stretched along the segment in the vertex shader, the same instancing pattern applied to a second primitive.'
+      }
+    ]
+  },
+  {
+    id: 'dd-picking', tier: 'deepdive', group: 'Code deep-dives', short: 'GPU picking',
+    title: 'GPU picking, <em>the composable and the second pass</em>',
+    duration: 'usePicking.ts + renderer.pick',
+    content: `
+      <h3>Two halves: a composable and a render pass</h3>
+      <p>Picking splits cleanly across the Vue and WebGL layers. <code>usePicking</code> (a composable) handles the pointer interaction; <code>renderer.pick</code> does the GPU work. <code>GraphCanvas</code> wires them together.</p>
+      <h3>usePicking: distinguishing a click from a drag</h3>
+      <pre><code>const CLICK_THRESHOLD = 4
+function onPointerMove(event) {
+  if (Math.abs(event.clientX - downX) &gt; CLICK_THRESHOLD || ...) dragged = true
+}
+function onPointerUp(event) {
+  if (dragged) return                     // it was an orbit, not a click
+  const deviceX = (event.clientX - rect.left) * dpr
+  const deviceY = (event.clientY - rect.top) * dpr
+  options.onPick(options.pickAt(deviceX, deviceY))
+}</code></pre>
+      <p>If the pointer moved more than 4px between down and up, it was a camera orbit, not a selection, so picking is skipped. The composable converts CSS pixels to device pixels using the device-pixel-ratio, then calls back. It registers its own listeners in <code>onMounted</code> and removes them in <code>onUnmounted</code>, fully self-contained.</p>
+      <h3>renderer.pick: render ids as colour</h3>
+      <pre><code>gl.bindFramebuffer(gl.FRAMEBUFFER, this.pickFbo)   // render offscreen
+gl.disable(gl.BLEND)
+// ...draw nodes with the picking shader...
+const pixel = new Uint8Array(4)
+gl.readPixels(readX, this.bufferHeight - py, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel)
+const id = pixel[0] + (pixel[1] &lt;&lt; 8) + (pixel[2] &lt;&lt; 16)
+return id === 0 ? null : id - 1</code></pre>
+      <p>The scene is drawn a second time to an offscreen framebuffer, where each node's fragment shader outputs its index encoded as RGB instead of its colour. Reading one pixel at the cursor and decoding the three channels back to an integer gives the node under the cursor in constant time, no matter how many nodes there are. Note the <code>+1 / -1</code> offset: ids are stored as <code>index + 1</code> so that <code>0</code> (the cleared background) can mean "nothing hit".</p>
+      <p><code>readY</code> flips the y axis because WebGL's framebuffer origin is bottom-left while pointer coordinates are top-left.</p>
+      <h3>Why not raycasting</h3>
+      <p>CPU raycasting scales with node count, you test every node against the ray. GPU picking is constant time because the GPU already drew all of them; you just read back one pixel. Three 8-bit channels hold 24 bits, about 16 million ids, far more than the graph needs.</p>
+      <div class="callout"><div class="callout-label">The full round trip</div>Click &rarr; <code>usePicking</code> filters out drags and converts coordinates &rarr; <code>renderer.pick</code> renders ids and reads one pixel &rarr; <code>onPick</code> calls <code>store.selectNode(id)</code> &rarr; the store's <code>selectedNode</code> computed updates &rarr; <code>NodeInspector</code> re-renders. Three layers, one reactive thread.</div>
+    `,
+    quiz: [
+      {
+        q: 'Why does GPU picking stay constant-time as node count grows, unlike CPU raycasting?',
+        options: [
+          'It uses a quadtree',
+          'The GPU already rendered every node, so picking just reads back one pixel; raycasting tests every node against the ray on the CPU',
+          'It caches previous clicks',
+          'It runs in a worker thread'
+        ],
+        correct: 1,
+        explanation: 'Picking piggybacks on a render pass the GPU does in parallel anyway, then reads a single pixel. Raycasting cost grows with the number of objects; readPixels does not.'
+      },
+      {
+        q: 'Why are node ids stored as index + 1 in the picking pass and decoded with - 1?',
+        options: [
+          'To skip node zero',
+          'The framebuffer is cleared to 0, so reserving 0 to mean "nothing hit" requires shifting real ids up by one',
+          'To leave room for edges',
+          'Because RGB cannot encode 0'
+        ],
+        correct: 1,
+        explanation: 'A cleared pixel reads back as 0. If index 0 were stored as 0 it would be indistinguishable from a miss, so ids are offset by one and decoded back, letting 0 unambiguously mean no hit.'
+      },
+      {
+        q: 'Why does usePicking track a 4px CLICK_THRESHOLD?',
+        options: [
+          'To debounce rapid clicks',
+          'To distinguish a selecting click from a camera-orbit drag, so dragging does not trigger a selection',
+          'To limit picking to high-DPI screens',
+          'To match the node radius'
+        ],
+        correct: 1,
+        explanation: 'Both selection and orbit start with a pointerdown. If the pointer moves beyond the threshold before release, it is treated as a drag (orbit) and picking is suppressed on pointerup.'
+      }
+    ]
+  },
+  {
+    id: 'dd-sampledata', tier: 'deepdive', group: 'Code deep-dives', short: 'sample-data.ts',
+    title: 'sample-data.ts, <em>closures and core JS</em>',
+    duration: 'src/domain/sample-data.ts',
+    content: `
+      <h3>The core-JavaScript file</h3>
+      <p>This is where the project's plain-JavaScript fundamentals live: a closure, bitwise math, <code>as const</code>, and a switch. It generates a deterministic graph from a seed.</p>
+      <h3>mulberry32: the canonical closure</h3>
+      <pre><code>function mulberry32(a: number) {
+  return function () {
+    let t = (a += 0x6d2b79f5)
+    t = Math.imul(t ^ (t &gt;&gt;&gt; 15), t | 1)
+    t ^= t + Math.imul(t ^ (t &gt;&gt;&gt; 7), t | 61)
+    return ((t ^ (t &gt;&gt;&gt; 14)) &gt;&gt;&gt; 0) / 4294967296
+  }
+}</code></pre>
+      <p>The outer function takes a seed <code>a</code> and returns an inner function. The inner function keeps mutating <code>a</code> across calls even though <code>mulberry32</code> has already returned, that is a <strong>closure</strong>: the inner function is bundled with the variable from the scope where it was defined, and that variable stays alive. <code>const prng = mulberry32(seed)</code> gives a function where each <code>prng()</code> call returns the next deterministic float in [0, 1). Same seed, same sequence, same graph, exactly what the store's determinism test relies on.</p>
+      <p>The body is bitwise integer math: <code>Math.imul</code> is 32-bit integer multiplication, <code>&gt;&gt;&gt;</code> is the unsigned right shift, and <code>&gt;&gt;&gt; 0</code> coerces to an unsigned 32-bit integer before dividing by 2^32 to land in [0, 1). You do not need to derive the constants in an interview; you need to be able to say "it is a small seeded PRNG kept private by a closure".</p>
+      <h3>as const: locking an array to literal types</h3>
+      <pre><code>const edgeKinds = ['supports', 'contradicts', 'derives'] as const</code></pre>
+      <p>Without <code>as const</code>, TypeScript infers <code>string[]</code>, and <code>edgeKinds[n]</code> is just <code>string</code>, which does not satisfy the <code>Edge</code> union's literal <code>kind</code>. <code>as const</code> freezes it to the readonly tuple, so indexing yields one of the three literals and the edge object type-checks.</p>
+      <h3>The generation loop</h3>
+      <pre><code>switch (i % 3) {
+  case 0: nodes.push({ ..., kind: 'concept', ..., weight: prng() }); break
+  case 1: nodes.push({ ..., kind: 'rule', ... }); break
+  case 2: nodes.push({ ..., kind: 'relation',
+    from: nodes[Math.floor(prng() * (i - 1))].id, ... }); break
+}</code></pre>
+      <p>Nodes cycle through the three kinds by <code>i % 3</code>. The relation node references <code>.id</code> off already-created nodes rather than building an id string by hand, so the value is already a <code>NodeId</code> and there is nothing to typo. Edges are built the same way: pick a target index with the PRNG, read <code>nodes[j].id</code>. Every connection is a real, branded id pulled from real data.</p>
+      <div class="callout"><div class="callout-label">Data, not layout</div>Notice what is NOT here: positions. The generator produces ids, kinds, and connections, the data model. Where a node lands on screen is computed later by the renderer's layout. Keeping the two apart is the principle that let <code>setMode</code> stop regenerating the graph.</div>
+    `,
+    quiz: [
+      {
+        q: 'mulberry32 returns an inner function that keeps using and mutating a after mulberry32 has already returned. What is that called?',
+        options: [
+          'A generator',
+          'A closure: the inner function is bundled with the variable from its defining scope, which stays alive after the outer function returns',
+          'A pure function',
+          'Recursion'
+        ],
+        correct: 1,
+        explanation: 'The inner function captures a from the enclosing scope. That binding survives because the closure holds a reference to it, which is how the PRNG keeps private seed state between calls.'
+      },
+      {
+        q: 'Why is as const needed on the edgeKinds array?',
+        options: [
+          'It makes the array faster to index',
+          'Without it the array infers as string[]; as const locks it to the readonly literal tuple, so indexing yields a literal that satisfies the Edge kind union',
+          'It prevents the array from being mutated at runtime only',
+          'It is required for forEach to work'
+        ],
+        correct: 1,
+        explanation: 'A plain array widens its elements to string. The Edge union needs one of three string literals, so as const is what keeps the element types narrow enough to match.'
+      },
+      {
+        q: 'Why does the relation node read nodes[...].id rather than building a node id string by hand?',
+        options: [
+          'It is shorter to type',
+          'Reading .id yields an already-branded NodeId from real data, so it is type-correct and there is nothing to typo',
+          'String building is not allowed in TypeScript',
+          'It avoids a runtime allocation'
+        ],
+        correct: 1,
+        explanation: 'Reading .id off an existing node gives a value that is already a NodeId. Hand-building the string would produce a plain string that needs casting and could be mistyped.'
+      }
+    ]
+  },
+  {
+    id: 'dd-tests', tier: 'deepdive', group: 'Code deep-dives', short: 'Test suite',
+    title: 'The test suite, <em>file by file</em>',
+    duration: 'tests/ (Vitest + Testing Library)',
+    content: `
+      <h3>Three tests, three layers</h3>
+      <p>The suite tests one file per layer: <code>types.test.ts</code> (pure domain), <code>graph-store.test.ts</code> (Pinia state), and <code>NodeInspector.test.ts</code> (a component). Each demonstrates a different testing concern.</p>
+      <h3>types.test.ts: testing pure functions</h3>
+      <pre><code>const concept: Node = { kind: 'concept', id: nodeId('a'), label: 'A', weight: 0.5 }
+expect(describeNode(concept)).toBe('A')
+expect(describeNode(relation)).toBe('a -&gt; b')</code></pre>
+      <p>No framework setup, no mocks, just input to output. It constructs one of each node variant and asserts <code>describeNode</code> returns the right string, which also proves the discriminated union narrows correctly. The edge test reuses <code>as const</code> on the kinds array to drive a data-driven loop, the same literal-types trick from the domain code.</p>
+      <h3>graph-store.test.ts: isolating a Pinia store</h3>
+      <pre><code>beforeEach(() =&gt; {
+  setActivePinia(createPinia())
+})</code></pre>
+      <p>This is the line that makes store tests reliable. Each test gets a fresh Pinia instance, so state never leaks between tests. Without it, <code>regenerate</code> in one test would pollute the next. What a store test actually verifies is <strong>behaviour</strong>: regenerate populates nodes, selectNode resolves the <code>selectedNode</code> computed, and both clearSelection and regenerate reset the selection.</p>
+      <pre><code>it('regenerate is deterministic for a fixed sequence', () =&gt; {
+  a.regenerate(20); const firstIds = a.nodes.map((n) =&gt; n.id)
+  setActivePinia(createPinia())
+  b.regenerate(20); const secondIds = b.nodes.map((n) =&gt; n.id)
+  expect(secondIds).toEqual(firstIds)
+})</code></pre>
+      <p>This test passes only because the PRNG is seeded, the determinism from <code>sample-data.ts</code> made testable. A truly random generator could not be asserted against.</p>
+      <h3>NodeInspector.test.ts: Testing Library philosophy</h3>
+      <pre><code>render(NodeInspector)
+expect(screen.getByText('No node selected.')).toBeTruthy()
+// ...
+const button = screen.getByRole('button', { name: /clear selection/i })
+button.click()
+expect(store.selectedNode).toBeNull()</code></pre>
+      <p>Queries go through <code>getByText</code> and <code>getByRole</code>, never class names or component internals. This is the Testing Library philosophy: <strong>test what the user sees and does</strong>, not how it is built. A class rename should not break a test; a broken accessible label should. The last test clicks the real button and asserts the store changed, the full data-down/events-up loop verified end to end.</p>
+      <div class="callout warn"><div class="callout-label">Coverage is not correctness</div>Coverage measures lines executed, not assertions made. You can run every line of <code>describeNode</code> without checking it returns the right answer. These tests assert outcomes, which is what actually catches regressions.</div>
+    `,
+    quiz: [
+      {
+        q: 'Why does graph-store.test.ts call setActivePinia(createPinia()) in beforeEach?',
+        options: [
+          'To speed up the tests',
+          'To give each test a fresh, isolated store so state from one test does not leak into the next',
+          'Because Pinia requires it once per file',
+          'To enable the Vue devtools'
+        ],
+        correct: 1,
+        explanation: 'A Pinia store is a singleton. Recreating it before each test guarantees isolation, so a regenerate in one test cannot affect the assertions in another.'
+      },
+      {
+        q: 'The determinism test asserts two regenerate(20) calls produce identical node ids. What makes that assertable?',
+        options: [
+          'Vitest snapshots the output',
+          'The seeded PRNG (mulberry32) makes generation deterministic, so the same seed yields the same sequence; a truly random generator could not be asserted',
+          'The ids are sorted before comparison',
+          'Pinia caches the previous result'
+        ],
+        correct: 1,
+        explanation: 'Determinism from the seeded PRNG is what makes the output testable. This is why the generator takes a seed rather than calling Math.random directly.'
+      },
+      {
+        q: 'Why does NodeInspector.test.ts query with getByRole and getByText instead of CSS class names?',
+        options: [
+          'Class queries are slower',
+          'Testing Library tests user-visible behaviour, not implementation, so a class rename should not break a test but a broken accessible label should',
+          'Vue scopes class names so they cannot be queried',
+          'getByRole is the only query available'
+        ],
+        correct: 1,
+        explanation: 'Querying by role and text mirrors how a user and assistive tech find elements. It decouples the test from markup details and surfaces accessibility failures as test failures.'
+      }
+    ]
+  },
+  {
+    id: 'dd-highlight', tier: 'deepdive', group: 'Code deep-dives', short: 'Edge highlighting',
+    title: 'Edge highlighting, <em>a CPU graph walk meets the GPU</em>',
+    duration: 'feature walkthrough',
+    content: `
+      <p>The last feature added to the project: click a node and light up a random subgraph of related connections. It is small on screen but it touches every layer, reactive state, a CPU graph traversal, a seeded PRNG, and an instanced attribute, so it is the best single thing to walk a CTO through.</p>
+      <h3>The first wrong turn (kept because it teaches)</h3>
+      <p>The first attempt gave each edge its two endpoint indices as attributes and compared them to a <code>u_selected</code> uniform in the shader: <code>highlight = (startIndex == u_selected || endIndex == u_selected)</code>. That lights every edge <em>touching</em> the selected node, and nothing further. It cannot express "the selected node, then a few of its neighbours, then a few of <em>their</em> neighbours", because that is a graph traversal, not a per-edge test. The lesson: a uniform comparison can answer "is this edge incident to X", but a multi-hop walk is data-dependent control flow that does not belong in a shader.</p>
+      <h3>Separate the drawn mesh from the highlighted set</h3>
+      <p>Two independent things. The <strong>drawn</strong> edges are the wireframe: the nearest-neighbour mesh on the sphere, the real domain edges on the disc. The <strong>highlighted</strong> edges are a subset chosen at click time. Keeping them separate means the resting view never changes and the highlight is free to be whatever subgraph we want.</p>
+      <h3>Why the walk runs on the CPU</h3>
+      <pre><code>// in GraphCanvas.vue, seeded per selected node
+const prng = mulberry32(root + 1)
+for (const j of pick(adjacency[root], 1 + Math.floor(prng() * 4))) {
+  flagEdge(root, j)
+  for (const k of pick(adjacency[j], 1 + Math.floor(prng() * 2))) flagEdge(j, k)
+}</code></pre>
+      <p>A traversal like this branches and remembers what it has visited. That is sequential, data-dependent logic, the opposite of the parallel per-fragment work a shader is good at. So the subgraph is computed in JavaScript over an <code>adjacency</code> list built from the drawn edges, and only the <em>result</em> is handed to the GPU.</p>
+      <h3>Bridging reactive selection to the GPU</h3>
+      <pre><code>watch(selectedNodeId, () =&gt; applyHighlight())</code></pre>
+      <p>This is the same reactive-to-imperative seam as the geometry <code>watch</code>, just for selection. When the store's <code>selectedNodeId</code> changes (from a pick or a clear), <code>applyHighlight</code> recomputes the flags and pushes them down. The Vue layer never touches WebGL; it reacts and delegates.</p>
+      <h3>The per-edge flag buffer</h3>
+      <pre><code>// renderer: one float per edge instance, dynamic
+setHighlight(flags) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.edgeBuffers.highlight)
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flags)
+}</code></pre>
+      <p>The shader reads a per-instance <code>a_highlight</code> attribute (0 or 1) instead of comparing indices. On selection we rewrite just that buffer with <code>bufferSubData</code>: one small upload per click, not per frame, and no geometry is re-uploaded. The fragment shader dims every edge to <code>0.3 × edgeAlpha</code> while something is selected and lifts the flagged ones, keeping their node colour so the lit subgraph reads in its own hue.</p>
+      <h3>Deterministic randomness</h3>
+      <p><code>mulberry32(root + 1)</code> reuses the seeded PRNG from <code>sample-data.ts</code>. Seeding by the node index makes the highlighted tree <strong>stable</strong> for a given node: click the same node twice and you get the same branches, which is what you want for a UI rather than a flicker. Same closure-and-determinism idea as the graph generator, applied to a feature.</p>
+      <h3>The precision gotcha that bit us</h3>
+      <p>An early version read <code>u_selected</code> (an <code>int</code>) in both the vertex and fragment shaders. The program failed to link: <code>int</code> defaults to <code>highp</code> precision in vertex shaders but <code>mediump</code> in fragment shaders, and a uniform shared across stages must match. Once the highlight moved to a per-edge attribute, the int uniform was only needed in one place, and the mismatch disappeared.</p>
+      <div class="callout"><div class="callout-label">Why this is the capstone</div>One feature, the whole stack: a store ref (<code>selectedNodeId</code>) drives a Vue <code>watch</code>, which runs a CPU graph walk over an adjacency list, seeded by the same <code>mulberry32</code> that builds the data, and the result rides a dynamic instanced attribute into the fragment shader. If you can explain this end to end, you can explain the project.</div>
+    `,
+    quiz: [
+      {
+        q: 'Why is the highlighted subgraph computed on the CPU rather than in the shader?',
+        options: [
+          'Shaders cannot read attributes',
+          'A multi-hop graph traversal is sequential, data-dependent control flow; a shader uniform comparison can only answer "is this edge incident to the selected node"',
+          'The CPU is faster than the GPU',
+          'WebGL2 does not support uniforms'
+        ],
+        correct: 1,
+        explanation: 'Walking 1-4 neighbours then 1-2 of each of theirs branches and tracks visited nodes. That is not parallel per-fragment work, so it runs in JS and only the resulting flags go to the GPU.'
+      },
+      {
+        q: 'How does the highlight reach the GPU on each click without re-uploading the edge geometry?',
+        options: [
+          'The whole geometry is rebuilt every click',
+          'A per-edge a_highlight attribute lives in a dynamic buffer that is rewritten with bufferSubData; only the flags change, not positions or colours',
+          'It is passed as a uniform array of edge ids',
+          'The shader recomputes it from u_selected'
+        ],
+        correct: 1,
+        explanation: 'Positions and colours are uploaded once. Selection only rewrites the small highlight buffer via bufferSubData, so the cost per click is one tiny upload rather than a full geometry rebuild.'
+      },
+      {
+        q: 'Why is mulberry32 seeded with the selected node index?',
+        options: [
+          'To make each click produce a different tree',
+          'So the highlighted tree is deterministic and stable for a given node: clicking it again shows the same branches',
+          'Because mulberry32 requires an index',
+          'To match the edge buffer length'
+        ],
+        correct: 1,
+        explanation: 'Seeding by node index gives reproducible randomness. A UI wants the highlight to be steady for a given selection, not reshuffle on every click, which the seed guarantees.'
+      }
+    ]
+  },
+  {
+    id: 'notes', tier: 'deepdive', group: 'Code deep-dives', short: 'Study notes',
+    title: 'Study notes, <em>the revision sheet</em>',
+    duration: 'notes.md',
+    content: `
+      <p>The distilled per-concept revision sheet from the build sessions. Each concept gives the <strong>core idea</strong>, an interview <strong>one-liner</strong>, and where useful the <strong>quiz Q&amp;A</strong> that pins it down.</p>
+
+      <h3>Phase 1 &mdash; Domain types (TypeScript)</h3>
+      <p><strong>Discriminated unions.</strong> A union of object types that all share one field (<code>kind</code>) with a unique literal value per variant. Checking that field narrows the whole type.</p>
+      <p><em>One-liner:</em> "A regular union says 'one of these types'; a discriminated union adds a shared literal <code>kind</code> so TypeScript can narrow to the exact variant in a switch."</p>
+      <p><strong>never and exhaustiveness.</strong> <code>never</code> is the bottom type, a value that can never exist. Put <code>assertNever(x: never)</code> in a switch <code>default</code>; once all variants are handled TS narrows the value to <code>never</code> there and accepts it. Add a variant without a case and it errors.</p>
+      <pre><code>function assertNever(x: never): never {
+  throw new Error(\`Unhandled variant: \${JSON.stringify(x)}\`)
+}</code></pre>
+      <p><em>One-liner:</em> "The <code>never</code> default branch turns 'I forgot a case' into a compile error."</p>
+      <p><strong>Structural typing &amp; branded types.</strong> TS compares types by shape, not name. <code>type NodeId = string</code> is transparent, any string satisfies it. A brand adds a phantom property that exists only at the type level:</p>
+      <pre><code>type NodeId = string & { readonly __brand: 'NodeId' }</code></pre>
+      <p><em>One-liner:</em> "Branding adds a compile-only phantom field so <code>NodeId</code> and <code>EdgeId</code> stop being interchangeable strings."</p>
+      <p><strong>Cast helper functions.</strong> <code>as NodeId</code> bypasses the type system. Centralise it in one function (<code>nodeId(raw)</code>) so the unsafe cast lives in one auditable place and can gain runtime validation later.</p>
+
+      <h3>Phase 2 &mdash; Sample data (TypeScript + algorithms)</h3>
+      <p><strong>as const.</strong> Without it, <code>['supports','contradicts','derives']</code> infers as <code>string[]</code>, which will not satisfy a string-literal union. <code>as const</code> locks it to the readonly literal tuple, so indexing yields a literal type.</p>
+      <p><em>One-liner:</em> "<code>as const</code> freezes an array to literal types so its values can match a string-literal union."</p>
+      <p><strong>Seeded PRNG (mulberry32).</strong> Takes an integer seed, returns a closure producing deterministic floats in [0,1). Same seed gives the same sequence gives reproducible graphs.</p>
+      <p><em>One-liner:</em> "A seeded PRNG makes the random graph deterministic, so tests and renders are reproducible."</p>
+      <p><strong>Graph data vs. layout</strong> (the principle that drives later refactors). The domain model is pure data: ids, fields, connections. Where things appear on screen is the renderer's job. Do not mix layout into the data model.</p>
+      <p><em>One-liner:</em> "Data is what the graph <em>is</em>; layout is where the renderer <em>puts</em> it, keep them apart."</p>
+      <p><strong>Building connected data.</strong> When creating relation nodes/edges, reference <code>.id</code> off already-created items rather than hand-building id strings, the type stays correct (<code>NodeId</code>) and there is nothing to typo.</p>
+
+      <h3>Phase 3 &mdash; Pinia store</h3>
+      <p><strong>ref vs shallowRef.</strong> <code>ref</code> deep-tracks (proxies every nested object); <code>shallowRef</code> only tracks reassignment of <code>.value</code>. Use <code>shallowRef</code> for the big <code>nodes</code>/<code>edges</code> arrays because the update pattern is always whole-array replacement, never in-place mutation.</p>
+      <p><em>One-liner:</em> "<code>shallowRef</code> tracks only <code>.value</code> reassignment, which is exactly my update pattern, so I skip the cost of proxying 100k node objects."</p>
+      <p><em>Q: plain <code>ref</code> vs <code>shallowRef</code> when you mutate a node in place?</em> With <code>ref</code> the DOM updates (deep tracking fires). With <code>shallowRef</code> the data changes but no reactivity fires, a stale view over correct data. That is the accepted trade-off, safe because the code never mutates in place.</p>
+      <p><strong>computed vs manual ref (selectedNode).</strong> <code>selectedNode</code> is a computed deriving from <code>selectedNodeId</code> AND <code>nodes</code>. A manual ref would be a cache you must re-sync at every mutation site, the killer is <code>regenerate</code>, which swaps the whole array and would leave a stale node reference.</p>
+      <p><em>One-liner:</em> "<code>computed</code> is the single source of truth for derived state; a manual ref is a cache you are obligated to invalidate and will eventually forget."</p>
+      <p><strong>storeToRefs.</strong> Destructuring a store copies the property's current value into a dead variable. <code>storeToRefs</code> wraps each state/getter in a live <code>ref</code>. Actions are destructured straight off the store, functions need no wrapper.</p>
+      <p><em>One-liner:</em> "Plain destructure = dead copy; <code>storeToRefs</code> = live ref wrapper. Wrap state/getters, call actions off the store."</p>
+      <p><strong>Setup-store mapping &amp; privacy.</strong> <code>ref</code>/<code>shallowRef</code> gives state, <code>computed</code> gives getter, <code>function</code> gives action. How it is <em>declared</em> decides the category. Anything you do not <code>return</code> is private (e.g. <code>seed</code>).</p>
+      <p><em>One-liner:</em> "In a setup store, what you do not return is private state; in TS strict, calling an unreturned member is a compile error, not a runtime crash."</p>
+      <p><strong>Action single-responsibility (the setMode refactor).</strong> Original <code>setMode</code> set the mode AND regenerated the graph AND hardcoded counts, three jobs, and it violated data/layout separation. Fixed: <code>setMode</code> only sets <code>mode</code>. Count is a separate <code>regenerate(count)</code>; re-placing nodes on mode change is the renderer's job; "disc usually wants more nodes" is UI policy for <code>GraphControls</code>.</p>
+      <p><em>One-liner:</em> "A store action should do one thing and not encode UI policy."</p>
+
+      <h3>Phase 4 &mdash; Vue component shell</h3>
+      <p><strong>&lt;script setup&gt;.</strong> No <code>export default</code>, no <code>return</code>. Every top-level binding (including imported components) is auto-exposed to the template, so no <code>components: {}</code> registration. In a template you write <code>count</code>, not <code>count.value</code>, refs auto-unwrap.</p>
+      <p><strong>Attribute binding, :class object syntax.</strong> No colon = literal string (<code>type="button"</code>). Colon = JS expression (<code>:key="count"</code>). <code>:class="{ active: cond }"</code> applies the class only while <code>cond</code> is truthy.</p>
+      <p><strong>v-for and :key.</strong> <code>:key</code> gives each item a stable identity. <em>What breaks without it?</em> It still renders; Vue falls back to index-based patching. The bug shows when items carry local state and the list reorders, that state binds to the wrong row.</p>
+      <p><strong>v-if vs v-show.</strong> <code>v-if</code> adds/removes the element from the DOM (runs lifecycle). <code>v-show</code> always renders and toggles CSS <code>display:none</code>. <code>&lt;template v-if&gt;</code> groups elements with no wrapper DOM node.</p>
+      <p><strong>Discriminated-union narrowing in the template</strong> (the Phase 1 payoff). Inside <code>v-if="selectedNode.kind === 'concept'"</code>, TS narrows <code>selectedNode</code> to the concept variant, so <code>.weight</code>/<code>.label</code> are safe. Move <code>{{ selectedNode.weight }}</code> outside that block and TS errors, on the full union <code>.weight</code> is not on every member.</p>
+      <p><strong>Composable vs utility (useFps).</strong> A composable holds reactive state and/or registers lifecycle hooks; it must be called in setup. A utility is pure input to output. In <code>useFps</code>, only <code>fps</code> is a ref (the UI reads it); <code>frames</code>/<code>lastSample</code> are plain closure vars. Reactive only what the view consumes.</p>
+      <p><strong>defineProps / defineEmits.</strong> Compiler macros (no import), only legal at the top level of <code>&lt;script setup&gt;</code>. Type-only generic form is the TS idiom. Props are read-only.</p>
+      <p><strong>Data down, events up.</strong> Props flow parent to child (read-only). To change parent/store state, a child <code>emit</code>s an event and the parent (owner of the store) calls the action.</p>
+      <p><strong>Smart vs dumb components.</strong> Read the store directly when the component is app-specific (<code>GraphControls</code>, <code>NodeInspector</code>, <code>GraphCanvas</code>). Take props when it is generic/reusable (<code>StatsOverlay</code>). Decision rule: "could this be reused in a different app? If yes, props."</p>
+      <p><strong>Template refs.</strong> <code>&lt;canvas ref="canvasEl"&gt;</code> + <code>const canvasEl = ref&lt;HTMLCanvasElement | null&gt;(null)</code>. The var name must match the <code>ref="..."</code> string. It is <code>null</code> during setup; Vue assigns the real element at mount (use it in <code>onMounted</code>). The <code>| null</code> forces a strict-null guard before WebGL use.</p>
+      <div class="callout warn"><div class="callout-label">Gotcha banked this session</div>Copying a line from the more-complete reference (<code>:edge-count="renderedEdges"</code>) dragged in a variable that did not exist yet, a type error plus runtime crash. Copying from a fuller reference imports dependencies you do not have. Fixed to <code>:edge-count="edgeCount"</code>.</div>
+    `
   }
 ];
 
@@ -4025,7 +5075,21 @@ const NODE_POSITIONS = {
   'p11':           { x: 120, y: 450 },
   'p12':           { x: 150, y: 420 },
   'p13':           { x: 180, y: 450 },
-  'interview':     { x: 140, y: 520 }
+  'dd-types':      { x:  30, y: 515 },
+  'dd-store':      { x:  80, y: 515 },
+  'dd-controls':   { x: 130, y: 515 },
+  'dd-inspector':  { x: 180, y: 515 },
+  'dd-canvas':     { x: 230, y: 515 },
+  'dd-stats':      { x:  30, y: 560 },
+  'dd-renderer':   { x:  80, y: 560 },
+  'dd-instancing': { x: 130, y: 560 },
+  'dd-picking':    { x: 180, y: 560 },
+  'notes':         { x: 230, y: 560 },
+  'dd-corejs':     { x:  30, y: 605 },
+  'dd-sampledata': { x: 105, y: 605 },
+  'dd-tests':      { x: 200, y: 605 },
+  'dd-highlight':  { x: 140, y: 632 },
+  'interview':     { x: 140, y: 670 }
 };
 
 // Edges connect within tier and between adjacent tiers
@@ -4047,7 +5111,16 @@ const EDGES = [
   ['tactics','p0'],['p0','p1'],['p1','p2'],['p2','p3'],['p3','p4'],['p4','p5'],['p5','p6'],
   ['p6','p7'],['p7','p8'],['p8','p9'],['p9','p10'],['p10','p11'],['p11','p12'],['p12','p13'],
   // All paths converge on the interview
-  ['p7','interview'],['p13','interview'],['p9','interview'],['tactics','interview']
+  ['p7','interview'],['p13','interview'],['p9','interview'],['tactics','interview'],
+  // Deep dives branch off the relevant phases, then chain
+  ['p1','dd-types'],['p3','dd-store'],['p4','dd-controls'],
+  ['dd-types','dd-store'],['dd-store','dd-controls'],['dd-controls','dd-inspector'],['dd-inspector','dd-canvas'],
+  ['dd-canvas','dd-stats'],['dd-stats','dd-renderer'],['dd-renderer','dd-instancing'],['dd-instancing','dd-picking'],['dd-picking','notes'],
+  ['dd-canvas','interview'],['notes','interview'],
+  ['js','dd-corejs'],['dd-corejs','dd-sampledata'],
+  ['p2','dd-sampledata'],['dd-types','dd-sampledata'],
+  ['p11','dd-tests'],['dd-store','dd-tests'],['dd-tests','interview'],
+  ['dd-picking','dd-highlight'],['dd-instancing','dd-highlight'],['dd-highlight','interview']
 ];
 
 // ============================================================================
@@ -4108,7 +5181,8 @@ function renderGraph() {
   h += `<text class="graph-cluster-label" x="10" y="105">TIER 2</text>`;
   h += `<text class="graph-cluster-label" x="10" y="175">TIER 3</text>`;
   h += `<text class="graph-cluster-label" x="10" y="305">PROJECT</text>`;
-  h += `<text class="graph-cluster-label" x="10" y="500">INTERVIEW</text>`;
+  h += `<text class="graph-cluster-label" x="10" y="490">DEEP DIVES</text>`;
+  h += `<text class="graph-cluster-label" x="10" y="650">INTERVIEW</text>`;
   // Edges
   EDGES.forEach(([a, b]) => {
     const pa = NODE_POSITIONS[a]; const pb = NODE_POSITIONS[b];
