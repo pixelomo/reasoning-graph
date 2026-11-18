@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noeon Frontend Prep</title>
+<title>Reasoning Graph Training</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -583,7 +583,7 @@ main {
   .welcome-hero { font-size: 30px; }
   pre { font-size: 12px; padding: 10px 12px; }
   .nav-bottom { flex-direction: column; gap: 16px; }
-  .interview-stats { grid-template-columns: 1fr 1fr; }
+  .final-quiz-stats { grid-template-columns: 1fr 1fr; }
   .history-row { grid-template-columns: 1fr 1fr; gap: 4px 12px; }
 }
 .fade-in { animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -591,9 +591,9 @@ main {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* Interview simulator */
-.interview-intro { max-width: 720px; }
-.interview-hero {
+/* Final quiz simulator */
+.final-quiz-intro { max-width: 720px; }
+.final-quiz-hero {
   font-family: var(--display);
   font-weight: 300;
   font-size: clamp(36px, 5vw, 52px);
@@ -601,9 +601,9 @@ main {
   letter-spacing: -0.025em;
   margin-bottom: 24px;
 }
-.interview-hero em { color: var(--cool); font-style: italic; }
-.interview-intro p { font-size: 16px; margin-bottom: 14px; color: var(--fg); max-width: 620px; }
-.interview-stats {
+.final-quiz-hero em { color: var(--cool); font-style: italic; }
+.final-quiz-intro p { font-size: 16px; margin-bottom: 14px; color: var(--fg); max-width: 620px; }
+.final-quiz-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
@@ -657,7 +657,7 @@ main {
   color: var(--fg-dim);
 }
 .history-row .score-cell { color: var(--warm); font-weight: 500; }
-.interview-active { max-width: 720px; }
+.final-quiz-active { max-width: 720px; }
 .iv-bar {
   height: 3px;
   background: var(--bg-elev-2);
@@ -828,7 +828,7 @@ main {
     <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle sidebar">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3h12M1 7h12M1 11h12"/></svg>
     </button>
-    <div class="brand">Noeon <em>prep</em></div>
+    <div class="brand">Reasoning Graph <em>training</em></div>
     <div class="header-meta">
       <span><span class="progress-num" id="progress-text">0/30</span> complete</span>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -1407,7 +1407,7 @@ test.prop([fc.array(fc.integer())])('reverse twice equals original', (arr) =&gt;
       <p>fast-check generates hundreds of inputs matching a spec. When it finds a failure it shrinks to a minimal counterexample. Devastating for finding edge cases in parsers, math, state machines.</p>
       <div class="callout warn">
         <div class="callout-label">Your gap</div>
-        Your attitude on testing was the largest non-knowledge gap in the mock interview. The shift you need is not "I will tolerate testing"; it is "tests are what give me the courage to refactor aggressively."
+        Your attitude on testing was the largest non-knowledge gap in the practice self-check. The shift you need is not "I will tolerate testing"; it is "tests are what give me the courage to refactor aggressively."
       </div>
       <div class="callout">
         <div class="callout-label">What to write first on a new module</div>
@@ -1634,7 +1634,7 @@ next(); // 2</code></pre>
       <p>Auth is commonly a bearer token (<code>Authorization: Bearer ...</code>) or an httpOnly cookie. <strong>CORS</strong> is a browser policy: cross-origin requests are blocked unless the server returns the right <code>Access-Control-Allow-Origin</code> headers, and unsafe methods trigger a preflight <code>OPTIONS</code> request. Wrap data access in a composable/service (<code>useNodes()</code>) owning loading/error/data refs; test it with MSW, which intercepts at the network layer so real fetch code runs against mocked responses.</p>
       <div class="callout">
         <div class="callout-label">Senior signal</div>
-        The fetch-does-not-reject-on-404 trap, idempotency and safe retries, and CORS being browser-enforced/server-configured are the three things interviewers probe to tell real API experience from copy-pasted fetch calls.
+        The fetch-does-not-reject-on-404 trap, idempotency and safe retries, and CORS being browser-enforced/server-configured are the three things deep questions probe to tell real API experience from copy-pasted fetch calls.
       </div>
     `,
     quiz: [
@@ -2029,7 +2029,7 @@ members = ["api", "engine", "shared"]
 resolver = "2"</code></pre>
       <p>Shared <code>target/</code> directory, shared dependency resolution. Common in larger projects.</p>
       <div class="callout">
-        <div class="callout-label">For the interview</div>
+        <div class="callout-label">For self-check</div>
         You do not need to write Rust. You need to read a signature like <code>fn process(input: &str) -> Result&lt;Output, ProcessError&gt;</code> and propose the matching TypeScript types. Bonus: explain why the borrow checker eliminates entire bug classes the GC'd languages still have at runtime.
       </div>
     `,
@@ -2271,7 +2271,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html</code></pre>
         <li><strong>arXiv</strong> for papers; Semantic Scholar or Papers with Code to filter by impact</li>
         <li><strong>Simon Willison</strong> (simonwillison.net): best practical LLM curation, near-daily</li>
         <li><strong>Ethan Mollick "One Useful Thing"</strong>: pragmatic, non-hype</li>
-        <li><strong>Latent Space podcast</strong>: industry-depth interviews</li>
+        <li><strong>Latent Space podcast</strong>: industry-depth conversations</li>
         <li><strong>AI News (smol.ai)</strong>: daily digest of everything notable</li>
         <li><strong>Andrej Karpathy videos</strong>: foundational depth when needed</li>
         <li><strong>X</strong>: first-party researchers only, filter ruthlessly</li>
@@ -2283,14 +2283,14 @@ COPY --from=builder /app/dist /usr/share/nginx/html</code></pre>
         <li>Replication or independent benchmarks usually arrive within 2 weeks; wait on extraordinary claims</li>
         <li>Watch what working engineers build with, not what threads predict will change everything</li>
       </ul>
-      <h3>For the interview</h3>
+      <h3>For self-check</h3>
       <p>Be ready to discuss one or two recent advances meaningfully. Pick something you have actually played with. "I have been experimenting with X and here is what I found" beats "I read about Y."</p>
     `,
     quiz: [
       {
         q: 'A new AI capability is announced with impressive benchmarks but no API or code release. How do you treat it?',
         options: [
-          'Cite it as state-of-the-art in your interview',
+          'Cite it as state-of-the-art in a self-check',
           'Discount the claim until independent replication or hands-on access is available',
           'Ignore it entirely',
           'Build your stack around it immediately'
@@ -2312,30 +2312,30 @@ COPY --from=builder /app/dist /usr/share/nginx/html</code></pre>
     ]
   },
   {
-    id: 'tactics', tier: 'tactics', group: 'Interview tactics', short: 'Interview strategy',
-    title: 'Interview <em>tactics</em>',
+    id: 'tactics', tier: 'tactics', group: 'Practice tactics', short: 'Practice strategy',
+    title: 'Practice <em>tactics</em>',
     duration: 'continuous',
     content: `
-      <h3>Position your strengths early</h3>
-      <p>Noeon will let you talk. Steer to WebGL, creative coding, the breadth of your project history. The fractal shader work, Mobius tiles, Gaussian splatting work, these are concrete, visual, and senior. Have a one-minute pitch on each.</p>
-      <h3>The AI-reliance question</h3>
-      <p>If it comes up: "I have used AI tools heavily for the last two years, like most of the industry, and I have recently been deliberately reinternalizing fundamentals because I noticed my unaided mechanics had softened. Here is what I have been doing." That is a mature answer.</p>
-      <h3>Don't bluff</h3>
-      <p>Discriminated unions, instancing, ownership in Rust. If these come up and you are shaky, say so directly, then show how fast you can learn by asking sharp questions back.</p>
-      <h3>Have a question bank ready</h3>
+      <h3>Lead with what you built by hand</h3>
+      <p>When explaining this project, steer to WebGL, creative coding, and the breadth of your history. The fractal shader work, Mobius tiles, Gaussian splatting work — these are concrete, visual, and senior. Have a one-minute pitch on each.</p>
+      <h3>Own the AI-reliance gap honestly</h3>
+      <p>The point of this repo: "I used AI tools heavily for years, like most of the industry, and I deliberately reinternalized fundamentals by coding this by hand because my unaided mechanics had softened." That is the training posture.</p>
+      <h3>Don't bluff yourself</h3>
+      <p>Discriminated unions, instancing, ownership in Rust. If a quiz question lands and you are shaky, mark it as a gap, then rebuild the concept from the reference until you can explain it cold.</p>
+      <h3>Keep a self-check question bank</h3>
       <ul>
-        <li>How is the reasoning system surfaced to non-technical users currently? What is the biggest UX friction?</li>
-        <li>What is the team's relationship with the research side, how do new capabilities flow into UI work?</li>
-        <li>What is the failure mode you have seen most often when senior frontend hires have not worked out?</li>
-        <li>How do you think about the trade-off between custom shader work and off-the-shelf libraries?</li>
-        <li>What does the first 90 days look like?</li>
+        <li>Can I explain every phase without opening the code?</li>
+        <li>Where did I lean on the reference too hard, and can I recreate that file from memory?</li>
+        <li>What fails if I skip shallowRef / instancing / GPU picking?</li>
+        <li>When would I reach for custom shader work vs an off-the-shelf library?</li>
+        <li>What would I add next, and why was it scoped out?</li>
       </ul>
-      <h3>Compensation</h3>
-      <p>Stated range is 14-17M JPY. You are senior with 14 years experience and a WebGL specialty matching their needs. Anchor toward the top, not the middle.</p>
+      <h3>Measure progress honestly</h3>
+      <p>FPS numbers, quiz scores, and whether you can explain a phase without notes beat vibes. Treat weak answers as the next training target, not something to paper over.</p>
     `,
     quiz: [
       {
-        q: 'The CTO asks about your AI tool usage. Best response?',
+        q: 'Someone asks about your AI tool usage while reviewing this training project. Best response?',
         options: [
           'Downplay it, claim minimal usage',
           'Acknowledge it directly, name what you noticed about your fundamentals, describe what you have been doing to reinternalize',
@@ -2346,26 +2346,26 @@ COPY --from=builder /app/dist /usr/share/nginx/html</code></pre>
         explanation: 'Maturity beats defensiveness. Acknowledge the industry reality, show self-awareness about the trade-off, demonstrate the corrective action.'
       },
       {
-        q: 'You are asked about something you have never used. What do you do?',
+        q: 'A quiz question lands on something you have never used. What do you do?',
         options: [
           'Bluff your way through with adjacent knowledge',
-          'Say so directly, then propose how you would approach learning it, and ask sharp questions back',
-          'Change the subject',
+          'Mark it as a gap, then propose how you would learn it and rebuild the concept from the reference',
+          'Skip the module forever',
           'Apologize repeatedly'
         ],
         correct: 1,
-        explanation: 'Senior engineers do not pretend. The combination of honest acknowledgment plus engaged curiosity demonstrates exactly the maturity that 14 years should produce.'
+        explanation: 'Training only works if weak answers become the next target. Honest acknowledgment plus a concrete learning plan beats pretending.'
       },
       {
-        q: 'Where should you anchor on the stated 14-17M JPY salary band?',
+        q: 'How should you measure whether this training project is working?',
         options: [
-          'The middle, to be reasonable',
-          'The bottom, to be safe',
-          'Toward the top, given senior level and a WebGL specialty matching their core need',
-          'Decline to discuss until later'
+          'By how polished the UI looks',
+          'By how many files the AI wrote for you',
+          'By quiz scores, FPS numbers, and whether you can explain each phase without notes',
+          'By commit count alone'
         ],
         correct: 2,
-        explanation: 'You have 14 years experience and a specialty directly matching their core technical need. Anchoring at the middle leaves money and signal on the table.'
+        explanation: 'The point is internalized skill. Concrete self-checks beat vibes or volume of activity.'
       }
     ]
   },
@@ -2419,7 +2419,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html</code></pre>
       <h3>Learning objective</h3>
       <p>Write a discriminated union with branded ids and a compile-time exhaustiveness check.</p>
       <h3>Why this matters</h3>
-      <p>For Noeon specifically: their domain is graph-neuro-symbolic with heterogeneous node types (concepts, rules, evidence, relations). A discriminated union is exactly how you model "this node can be one of several kinds, each with different fields" in a type-safe way. Branded ids prevent the class of bugs where you pass an EdgeId where a NodeId was expected, these would be compile errors with branding, silent runtime bugs without.</p>
+      <p>This project's domain is a reasoning graph with heterogeneous node types (concepts, rules, evidence, relations). A discriminated union is exactly how you model "this node can be one of several kinds, each with different fields" in a type-safe way. Branded ids prevent the class of bugs where you pass an EdgeId where a NodeId was expected — compile errors with branding, silent runtime bugs without.</p>
       <h3>What you build</h3>
       <ul>
         <li>A <code>Node</code> type that is a discriminated union of at least four variants: concept, relation, rule, evidence</li>
@@ -2581,7 +2581,7 @@ const nodes = shallowRef&lt;Node[]&gt;([]); // reactive only on replacement</cod
       <h3>Learning objective</h3>
       <p>script setup syntax. defineProps with TypeScript. Where composables, stores, and provide/inject each belong.</p>
       <h3>Why this matters</h3>
-      <p>This is the phase where most candidates show their composition instincts. The interviewer can tell who's still in Vue 2 mindset (Options API, mixins, root-level event bus) vs who's internalized Composition API patterns (script setup, store-direct reads, composables for independent reusable state). Get the boundaries right here and the rest of the project gets cleaner.</p>
+      <p>This is the phase where most candidates show their composition instincts. You can tell who's still in Vue 2 mindset (Options API, mixins, root-level event bus) vs who's internalized Composition API patterns (script setup, store-direct reads, composables for independent reusable state). Get the boundaries right here and the rest of the project gets cleaner.</p>
       <h3>What you build</h3>
       <ul>
         <li><code>App.vue</code> with layout (canvas area + sidebar)</li>
@@ -2641,7 +2641,7 @@ const nodes = shallowRef&lt;Node[]&gt;([]); // reactive only on replacement</cod
       <h3>Learning objective</h3>
       <p>WebGL2 context. Vertex and fragment shaders. Attribute binding. Drawing a single quad before scaling to many.</p>
       <h3>Why this matters</h3>
-      <p>This is the "do I really know WebGL" filter. Get-one-quad-rendering is harder than it looks: program linking can fail silently, attribute locations can be -1, the viewport may not match the canvas, the clear color may mask everything. Walking the interviewer through the diagnostic ladder (hardcode red, check getError, check info logs, verify viewport) is gold.</p>
+      <p>This is the "do I really know WebGL" filter. Get-one-quad-rendering is harder than it looks: program linking can fail silently, attribute locations can be -1, the viewport may not match the canvas, the clear color may mask everything. Walking through the diagnostic ladder (hardcode red, check getError, check info logs, verify viewport) is gold.</p>
       <h3>What you build</h3>
       <ul>
         <li>Get a WebGL2 context from the canvas</li>
@@ -2703,7 +2703,7 @@ const nodes = shallowRef&lt;Node[]&gt;([]); // reactive only on replacement</cod
       <h3>Learning objective</h3>
       <p>The conceptual leap. One draw call for N nodes regardless of count.</p>
       <h3>Why this matters</h3>
-      <p>This is the centerpiece of your Noeon interview. The pitch: "Their interpretability story is only as good as their ability to surface graphs to researchers. Most tools fall over past a few thousand nodes. I built this to internalize the techniques that scale." Being able to walk through the math (instancing = N draw calls collapsed to 1, freeing CPU for everything else) and produce the FPS numbers is the demo.</p>
+      <p>This is the centerpiece of the training project. The pitch to yourself: "Most graph tools fall over past a few thousand nodes. I built this by hand to internalize the techniques that scale." Being able to walk through the math (instancing = N draw calls collapsed to 1, freeing CPU for everything else) and produce the FPS numbers is the proof.</p>
       <h3>The mechanics</h3>
       <ul>
         <li>One geometry buffer (the unit quad, 6 vertices)</li>
@@ -2712,7 +2712,7 @@ const nodes = shallowRef&lt;Node[]&gt;([]); // reactive only on replacement</cod
         <li><code>gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, nodeCount)</code></li>
       </ul>
       <h3>The benchmark</h3>
-      <p>Render 1k, 10k, 100k, 250k nodes. Watch the FPS counter. This is the concrete experience of why instancing matters. Document the numbers in your README, they're your strongest interview artifact.</p>
+      <p>Render 1k, 10k, 100k, 250k nodes. Watch the FPS counter. This is the concrete experience of why instancing matters. Document the numbers in your README, they're your strongest training artifact.</p>
       <h3>Interleaved vs separate buffers</h3>
       <p>Separate buffers (one per attribute) are simpler for learning. Interleaved (all attributes in one buffer, struct-like) is more cache-friendly for production. Start separate, refactor to interleaved if perf demands.</p>
       <h3>Verification checklist</h3>
@@ -2884,7 +2884,7 @@ const world = invViewMatrix * vec4(ndc, 0, 1);</code></pre>
       <h3>Learning objective</h3>
       <p>The showpiece. Second-pass color picking. Scales constant-time regardless of node count.</p>
       <h3>Why this matters</h3>
-      <p>For graph viz at scale, this is the dividing line between toys and tools. CPU raycasting scales O(N), fine for 1k nodes, dead at 100k. GPU picking is O(1) at the cost of one extra render pass on click. Knowing when to reach for it, and being able to explain the offscreen-framebuffer mechanism without hand-waving, is a senior signal Noeon will recognize immediately.</p>
+      <p>For graph viz at scale, this is the dividing line between toys and tools. CPU raycasting scales O(N), fine for 1k nodes, dead at 100k. GPU picking is O(1) at the cost of one extra render pass on click. Knowing when to reach for it, and being able to explain the offscreen-framebuffer mechanism without hand-waving, is a senior signal you should be able to explain cold.</p>
       <h3>The mechanics</h3>
       <ol>
         <li>Create an offscreen framebuffer with a color attachment (a texture)</li>
@@ -2969,7 +2969,7 @@ fragColor = vec4(
       <h3>Learning objective</h3>
       <p>requestAnimationFrame loop integration with reactive state. GLSL animation driven by uniforms.</p>
       <h3>Why this matters</h3>
-      <p>For Noeon's continual-learning story, this is the "diff view" muscle. When the reasoning graph changes between checkpoints, you need to animate nodes appearing/disappearing/changing weight so the researcher can see what changed. The per-instance birthTime pattern generalizes directly to "show me what nodes are new since timestamp T".</p>
+      <p>For a reasoning-graph viz, this is the "diff view" muscle. When the graph changes between checkpoints, you need to animate nodes appearing/disappearing/changing weight so changes are visible. The per-instance birthTime pattern generalizes directly to "show me what nodes are new since timestamp T".</p>
       <h3>What you build</h3>
       <ul>
         <li>Newly added nodes fade in over 300ms (per-instance birth time as an attribute, fragment fades based on <code>time - birthTime</code>)</li>
@@ -3030,7 +3030,7 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
       <h3>Learning objective</h3>
       <p>Vitest, Vue Test Utils, Testing Library. Test what users see, not how the code works.</p>
       <h3>Why this matters</h3>
-      <p>Two reasons. One, this phase exists specifically to close the testing gap from your mock interview. Two, when the CTO opens your repo and runs <code>npm test</code>, the presence (and quality) of tests is the second thing they evaluate after "does it run". Skipping or phoning in this phase undoes the work of the earlier phases.</p>
+      <p>Two reasons. One, this phase exists specifically to close the testing gap from your practice self-check. Two, when you (or anyone) opens the repo and runs <code>npm test</code>, the presence and quality of tests is the second signal after "does it run". Skipping or phoning in this phase undoes the work of the earlier phases.</p>
       <h3>What you write</h3>
       <ul>
         <li><code>types.test.ts</code>: each Node variant constructs correctly, describeNode covers all cases (the exhaustiveness check from Phase 1)</li>
@@ -3058,7 +3058,7 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
       </ul>
       <div class="callout warn">
         <div class="callout-label">Do not skip this</div>
-        This phase exists because your testing posture was the largest non-knowledge gap. Skipping it means the gap is still there in the artifact and in your hands when the CTO opens the repo.
+        This phase exists because your testing posture was the largest non-knowledge gap. Skipping it means the gap is still there in the artifact and in your hands when you open the repo cold.
       </div>
     `,
     quiz: [
@@ -3094,7 +3094,7 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
       <h3>Learning objective</h3>
       <p>Build a real GitHub Actions pipeline from scratch. No copy-paste.</p>
       <h3>Why this matters</h3>
-      <p>This is the Tier 2 evidence the CTO can verify without you in the room. A clean CI file says you ship code professionally: you cache dependencies, you control concurrency, you fail fast on each layer separately so failures are diagnosable. A copy-pasted CI file says the opposite.</p>
+      <p>This is Tier 2 evidence anyone can verify without you narrating it. A clean CI file says you ship code professionally: you cache dependencies, you control concurrency, you fail fast on each layer separately so failures are diagnosable. A copy-pasted CI file says the opposite.</p>
       <h3>What you build</h3>
       <p>A <code>.github/workflows/ci.yml</code> that:</p>
       <ul>
@@ -3123,7 +3123,7 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
         <li>Concurrency group keyed too broadly (e.g., just <code>\${{ github.workflow }}</code>), cancels runs across unrelated PRs.</li>
         <li>Not pinning action versions to a specific commit SHA in security-sensitive repos.</li>
       </ul>
-      <h3>What the CTO will look at</h3>
+      <h3>What a cold reader will look at</h3>
       <p>The yml. If it is clean, well-organized, and shows you understand concurrency control and caching, that is a solid Tier 2 signal directly visible without you saying anything.</p>
     `,
     quiz: [
@@ -3157,13 +3157,13 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
     duration: '1 hour',
     content: `
       <h3>Learning objective</h3>
-      <p>Position the project honestly so it lands well at a company that values lifelong learning.</p>
+      <p>Position the project honestly as a hand-coding training exercise after years of AI-built apps.</p>
       <h3>Why this matters</h3>
-      <p>How you frame the project shapes what the interviewer is looking for when they read the code. Frame as "production system" → they look for what's missing. Frame as "deliberate learning artifact" → they look for what was internalized. The same code reads very differently. Noeon explicitly hires for lifelong learning; the second framing matches their values precisely.</p>
+      <p>How you frame the project shapes what a reader looks for in the code. Frame as "production system" → they look for what's missing. Frame as "deliberate training artifact" → they look for what was internalized. The same code reads very differently; the second framing matches why this repo exists.</p>
       <h3>What the README says</h3>
       <ul>
         <li>What the project is: a Vue 3 + TS + WebGL2 graph visualization</li>
-        <li>Why it exists: a deliberate learning artifact built during interview prep, refreshing Vue 3 idioms and learning instancing + GPU picking</li>
+        <li>Why it exists: a deliberate training project to code by hand again, refreshing Vue 3 idioms and learning instancing + GPU picking</li>
         <li>What it demonstrates: list the technical capabilities concretely</li>
         <li>Performance table: measured FPS at 1k, 10k, 100k, 250k nodes (your actual numbers)</li>
         <li>How to run it locally</li>
@@ -3171,7 +3171,7 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
         <li>What was deliberately scoped out and why</li>
       </ul>
       <h3>Why the honest framing wins</h3>
-      <p>Noeon explicitly lists lifelong learning as a value they hire for. A project framed as "deliberate practice during interview prep" reads as exactly that. A project pretending to be a polished production artifact, when probed in the interview and found shallow, reads worse than no project at all.</p>
+      <p>A project framed as deliberate practice after AI-assisted years reads as exactly that. A project pretending to be a polished production artifact, when probed and found shallow, reads worse than no project at all.</p>
       <h3>Verification checklist</h3>
       <ul>
         <li>README starts with a one-paragraph summary that someone could skim in 15 seconds.</li>
@@ -3186,7 +3186,7 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
         <li>Performance numbers without hardware context, "60fps at 100k" means nothing without "on an M2 Air".</li>
         <li>README written before the project exists, full of aspirations the code doesn't deliver.</li>
         <li>One giant commit at the end, destroys the learning-arc narrative.</li>
-        <li>Generic "graph visualization tool" framing, Noeon will read it as "yet another demo".</li>
+        <li>Generic "graph visualization tool" framing reads as "yet another demo" and hides the training purpose.</li>
       </ul>
       <h3>Final commit</h3>
       <p><code>docs: README and project polish</code></p>
@@ -3196,12 +3196,12 @@ fragColor.rgb += vec3(pulse) * ring * float(isSelected);</code></pre>
         q: 'How should you frame this project in the README?',
         options: [
           'As a finished production-grade application',
-          'As a deliberate learning artifact built during interview prep to internalize Vue 3 idioms and senior WebGL patterns',
+          'As a deliberate training project to code by hand again and internalize Vue 3 idioms and senior WebGL patterns',
           'Without context, let the code speak',
           'As a generic graph viz demo'
         ],
         correct: 1,
-        explanation: 'Honesty wins because it matches what the CTO will find when they probe in the interview, and because Noeon explicitly values lifelong learning. Misrepresentation invites disappointment.'
+        explanation: 'Honesty wins because it matches what a reader finds when they probe the code, and because the point of the repo is deliberate practice after years of AI-built apps. Misrepresentation invites disappointment.'
       }
     ]
   },
@@ -3286,7 +3286,7 @@ const id = \`node-\${i}\`
 import { useGraphStore } from '@/stores/graph-store'
 export function nodeId(raw) { /* ... */ }</code></pre>
       <p>Spread for immutable updates (<code>{ ...state, field }</code>) is the same pattern Pinia and Vue reactivity reward: replace, do not mutate in place. <code>?.</code> stops at the first null/undefined instead of throwing; <code>??</code> falls back only on null/undefined, unlike <code>||</code> which also falls back on <code>0</code> and <code>''</code>. <code>Map</code> and <code>Set</code> (used in the renderer for <code>idToIndex</code> and the memoize example) beat plain objects when keys are not strings or insertion order matters.</p>
-      <div class="callout"><div class="callout-label">Senior signal</div>Naming currying vs partial application, knowing exactly which array methods mutate, and reaching for <code>Promise.all</code> instead of sequential awaits are the fluency markers an interviewer probes for. The trap question is almost always "would this run concurrently or one after another?"</div>
+      <div class="callout"><div class="callout-label">Senior signal</div>Naming currying vs partial application, knowing exactly which array methods mutate, and reaching for <code>Promise.all</code> instead of sequential awaits are the fluency markers a hard self-check probes for. The trap question is almost always "would this run concurrently or one after another?"</div>
     `,
     quiz: [
       {
@@ -4009,7 +4009,7 @@ return id === 0 ? null : id - 1</code></pre>
   }
 }</code></pre>
       <p>The outer function takes a seed <code>a</code> and returns an inner function. The inner function keeps mutating <code>a</code> across calls even though <code>mulberry32</code> has already returned, that is a <strong>closure</strong>: the inner function is bundled with the variable from the scope where it was defined, and that variable stays alive. <code>const prng = mulberry32(seed)</code> gives a function where each <code>prng()</code> call returns the next deterministic float in [0, 1). Same seed, same sequence, same graph, exactly what the store's determinism test relies on.</p>
-      <p>The body is bitwise integer math: <code>Math.imul</code> is 32-bit integer multiplication, <code>&gt;&gt;&gt;</code> is the unsigned right shift, and <code>&gt;&gt;&gt; 0</code> coerces to an unsigned 32-bit integer before dividing by 2^32 to land in [0, 1). You do not need to derive the constants in an interview; you need to be able to say "it is a small seeded PRNG kept private by a closure".</p>
+      <p>The body is bitwise integer math: <code>Math.imul</code> is 32-bit integer multiplication, <code>&gt;&gt;&gt;</code> is the unsigned right shift, and <code>&gt;&gt;&gt; 0</code> coerces to an unsigned 32-bit integer before dividing by 2^32 to land in [0, 1). You do not need to derive the constants in a self-check; you need to be able to say "it is a small seeded PRNG kept private by a closure".</p>
       <h3>as const: locking an array to literal types</h3>
       <pre><code>const edgeKinds = ['supports', 'contradicts', 'derives'] as const</code></pre>
       <p>Without <code>as const</code>, TypeScript infers <code>string[]</code>, and <code>edgeKinds[n]</code> is just <code>string</code>, which does not satisfy the <code>Edge</code> union's literal <code>kind</code>. <code>as const</code> freezes it to the readonly tuple, so indexing yields one of the three literals and the edge object type-checks.</p>
@@ -4134,7 +4134,7 @@ expect(store.selectedNode).toBeNull()</code></pre>
     title: 'Edge highlighting, <em>a CPU graph walk meets the GPU</em>',
     duration: 'feature walkthrough',
     content: `
-      <p>The last feature added to the project: click a node and light up a random subgraph of related connections. It is small on screen but it touches every layer, reactive state, a CPU graph traversal, a seeded PRNG, and an instanced attribute, so it is the best single thing to walk a CTO through.</p>
+      <p>The last feature added to the project: click a node and light up a random subgraph of related connections. It is small on screen but it touches every layer, reactive state, a CPU graph traversal, a seeded PRNG, and an instanced attribute, so it is the best single thing to walk yourself through end to end.</p>
       <h3>The first wrong turn (kept because it teaches)</h3>
       <p>The first attempt gave each edge its two endpoint indices as attributes and compared them to a <code>u_selected</code> uniform in the shader: <code>highlight = (startIndex == u_selected || endIndex == u_selected)</code>. That lights every edge <em>touching</em> the selected node, and nothing further. It cannot express "the selected node, then a few of its neighbours, then a few of <em>their</em> neighbours", because that is a graph traversal, not a per-edge test. The lesson: a uniform comparison can answer "is this edge incident to X", but a multi-hop walk is data-dependent control flow that does not belong in a shader.</p>
       <h3>Separate the drawn mesh from the highlighted set</h3>
@@ -4204,7 +4204,7 @@ setHighlight(flags) {
     title: 'Study notes, <em>the revision sheet</em>',
     duration: 'notes.md',
     content: `
-      <p>The distilled per-concept revision sheet from the build sessions. Each concept gives the <strong>core idea</strong>, an interview <strong>one-liner</strong>, and where useful the <strong>quiz Q&amp;A</strong> that pins it down.</p>
+      <p>The distilled per-concept revision sheet from the build sessions. Each concept gives the <strong>core idea</strong>, a short <strong>one-liner</strong>, and where useful the <strong>quiz Q&amp;A</strong> that pins it down.</p>
 
       <h3>Phase 1 &mdash; Domain types (TypeScript)</h3>
       <p><strong>Discriminated unions.</strong> A union of object types that all share one field (<code>kind</code>) with a unique literal value per variant. Checking that field narrows the whole type.</p>
@@ -4263,8 +4263,8 @@ const WELCOME = {
   isWelcome: true,
   content: `
     <div class="welcome">
-      <div class="module-eyebrow">Noeon Frontend Engineer Prep</div>
-      <h1 class="welcome-hero">A three-week sprint to <em>walk into your interview</em> ready.</h1>
+      <div class="module-eyebrow">Reasoning Graph Training</div>
+      <h1 class="welcome-hero">A hand-coding sprint to <em>make the concepts stick</em> again.</h1>
       <p>Twelve concept modules plus the fourteen-phase project guide, each with a short quiz to verify the concepts actually stuck rather than passed through.</p>
       <p>The knowledge graph in the sidebar is your navigation. Each node is a module. Completing a module's quiz lights up the node. Watch the graph fill in as you work.</p>
       <div class="welcome-tiers">
@@ -4276,7 +4276,7 @@ const WELCOME = {
         <div class="tier-card">
           <div class="tier-card-label">Tier 2 - Material</div>
           <div class="tier-card-title">Week 2</div>
-          <div class="tier-card-desc">Security fundamentals, deep CI/CD, production-grade shipping, Rust primer. Moves you from interesting to want-to-hire.</div>
+          <div class="tier-card-desc">Security fundamentals, deep CI/CD, production-grade shipping, Rust primer. Moves you from rusty to sharp.</div>
         </div>
         <div class="tier-card">
           <div class="tier-card-label">Tier 3 - Round-out</div>
@@ -4285,14 +4285,14 @@ const WELCOME = {
         </div>
       </div>
       <button class="start-btn" onclick="goTo('t1-vue')">Start with Vue 3 →</button>
-      <button class="btn" style="margin-top: 16px; margin-left: 8px;" onclick="goTo('interview')">Skip to interview simulator</button>
+      <button class="btn" style="margin-top: 16px; margin-left: 8px;" onclick="goTo('final-quiz')">Skip to final quiz</button>
     </div>
   `
 };
 
 // ============================================================================
 // SIMULATOR QUESTION BANK
-// Additional senior-level questions used only in the interview simulator.
+// Additional senior-level questions used only in the final quiz simulator.
 // These are NOT shown in the course module quizzes.
 // Distribution targets: Tier 1 75%, Tier 2 20%, Tier 3 5%
 // ============================================================================
@@ -5089,7 +5089,7 @@ const NODE_POSITIONS = {
   'dd-sampledata': { x: 105, y: 605 },
   'dd-tests':      { x: 200, y: 605 },
   'dd-highlight':  { x: 140, y: 632 },
-  'interview':     { x: 140, y: 670 }
+  'final-quiz':     { x: 140, y: 670 }
 };
 
 // Edges connect within tier and between adjacent tiers
@@ -5110,32 +5110,32 @@ const EDGES = [
   // Project chain
   ['tactics','p0'],['p0','p1'],['p1','p2'],['p2','p3'],['p3','p4'],['p4','p5'],['p5','p6'],
   ['p6','p7'],['p7','p8'],['p8','p9'],['p9','p10'],['p10','p11'],['p11','p12'],['p12','p13'],
-  // All paths converge on the interview
-  ['p7','interview'],['p13','interview'],['p9','interview'],['tactics','interview'],
+  // All paths converge on the final quiz
+  ['p7','final-quiz'],['p13','final-quiz'],['p9','final-quiz'],['tactics','final-quiz'],
   // Deep dives branch off the relevant phases, then chain
   ['p1','dd-types'],['p3','dd-store'],['p4','dd-controls'],
   ['dd-types','dd-store'],['dd-store','dd-controls'],['dd-controls','dd-inspector'],['dd-inspector','dd-canvas'],
   ['dd-canvas','dd-stats'],['dd-stats','dd-renderer'],['dd-renderer','dd-instancing'],['dd-instancing','dd-picking'],['dd-picking','notes'],
-  ['dd-canvas','interview'],['notes','interview'],
+  ['dd-canvas','final-quiz'],['notes','final-quiz'],
   ['js','dd-corejs'],['dd-corejs','dd-sampledata'],
   ['p2','dd-sampledata'],['dd-types','dd-sampledata'],
-  ['p11','dd-tests'],['dd-store','dd-tests'],['dd-tests','interview'],
-  ['dd-picking','dd-highlight'],['dd-instancing','dd-highlight'],['dd-highlight','interview']
+  ['p11','dd-tests'],['dd-store','dd-tests'],['dd-tests','final-quiz'],
+  ['dd-picking','dd-highlight'],['dd-instancing','dd-highlight'],['dd-highlight','final-quiz']
 ];
 
 // ============================================================================
 // STATE & PERSISTENCE
 // ============================================================================
-const STORAGE_KEY = 'noeon-prep-v1';
+const STORAGE_KEY = 'reasoning-graph-train-v1';
 let state = {
   currentId: null,
   completed: {},     // moduleId -> { score, total, ts }
   quizAnswers: {},   // moduleId -> { qIdx -> selectedOptionIdx }
-  interviewHistory: [] // array of { score, total, duration, ts, breakdown }
+  finalQuizHistory: [] // array of { score, total, duration, ts, breakdown }
 };
 
-// Active interview (not persisted, fresh each session)
-let currentInterview = null;
+// Active final quiz (not persisted, fresh each session)
+let currentFinalQuiz = null;
 
 function loadState() {
   try {
@@ -5152,8 +5152,8 @@ function saveState() {
 
 function resetState() {
   if (!confirm('Reset all progress? This cannot be undone.')) return;
-  state = { currentId: null, completed: {}, quizAnswers: {}, interviewHistory: [] };
-  currentInterview = null;
+  state = { currentId: null, completed: {}, quizAnswers: {}, finalQuizHistory: [] };
+  currentFinalQuiz = null;
   saveState();
   goTo(null);
 }
@@ -5182,7 +5182,7 @@ function renderGraph() {
   h += `<text class="graph-cluster-label" x="10" y="175">TIER 3</text>`;
   h += `<text class="graph-cluster-label" x="10" y="305">PROJECT</text>`;
   h += `<text class="graph-cluster-label" x="10" y="490">DEEP DIVES</text>`;
-  h += `<text class="graph-cluster-label" x="10" y="650">INTERVIEW</text>`;
+  h += `<text class="graph-cluster-label" x="10" y="650">FINAL QUIZ</text>`;
   // Edges
   EDGES.forEach(([a, b]) => {
     const pa = NODE_POSITIONS[a]; const pb = NODE_POSITIONS[b];
@@ -5205,18 +5205,18 @@ function renderGraph() {
       <title>${m.short}</title>
     </g>`;
   });
-  // Interview node (special: larger, diamond shape via rotated square)
-  const ip = NODE_POSITIONS['interview'];
-  const ivCurrent = state.currentId === 'interview';
-  const ivRuns = (state.interviewHistory || []).length;
+  // Final quiz node (special: larger, diamond shape via rotated square)
+  const ip = NODE_POSITIONS['final-quiz'];
+  const ivCurrent = state.currentId === 'final-quiz';
+  const ivRuns = (state.finalQuizHistory || []).length;
   const ivFill = ivRuns > 0 ? 'var(--warm)' : (ivCurrent ? 'var(--cool)' : 'var(--cold)');
   const ivStroke = ivCurrent ? 'var(--cool)' : 'var(--border-hot)';
   const ivGlow = ivRuns > 0 ? `<rect x="${ip.x - 12}" y="${ip.y - 12}" width="24" height="24" fill="var(--warm)" opacity="0.12" transform="rotate(45 ${ip.x} ${ip.y})"/>` : '';
   const ivRing = ivCurrent ? `<rect x="${ip.x - 11}" y="${ip.y - 11}" width="22" height="22" fill="none" stroke="var(--cool)" stroke-width="1" opacity="0.5" transform="rotate(45 ${ip.x} ${ip.y})"/>` : '';
-  h += `<g class="graph-node" data-id="interview">
+  h += `<g class="graph-node" data-id="final-quiz">
     ${ivGlow}${ivRing}
     <rect x="${ip.x - 7}" y="${ip.y - 7}" width="14" height="14" fill="${ivFill}" stroke="${ivStroke}" stroke-width="1.5" transform="rotate(45 ${ip.x} ${ip.y})"/>
-    <title>Interview Simulator${ivRuns > 0 ? ' (' + ivRuns + ' runs)' : ''}</title>
+    <title>Final Quiz${ivRuns > 0 ? ' (' + ivRuns + ' runs)' : ''}</title>
   </g>`;
   svg.innerHTML = h;
   svg.querySelectorAll('.graph-node').forEach(g => {
@@ -5248,17 +5248,17 @@ function renderList() {
     });
     h += `</div>`;
   });
-  // Interview simulator at the bottom
-  const ivCurrent = state.currentId === 'interview';
-  const ivRuns = (state.interviewHistory || []).length;
+  // Final quiz at the bottom
+  const ivCurrent = state.currentId === 'final-quiz';
+  const ivRuns = (state.finalQuizHistory || []).length;
   const ivCls = ['module-item'];
   if (ivCurrent) ivCls.push('active');
   if (ivRuns > 0) ivCls.push('complete');
   h += `<div class="module-group">
     <div class="module-group-header">Capstone</div>
-    <div class="${ivCls.join(' ')}" data-id="interview">
+    <div class="${ivCls.join(' ')}" data-id="final-quiz">
       <div class="status"></div>
-      <div>Interview simulator${ivRuns > 0 ? ' · ' + ivRuns : ''}</div>
+      <div>Final quiz${ivRuns > 0 ? ' · ' + ivRuns : ''}</div>
     </div>
   </div>`;
   list.innerHTML = h;
@@ -5486,8 +5486,8 @@ function goTo(id) {
   stopSpeech();
   state.currentId = id;
   saveState();
-  if (id === 'interview') {
-    renderInterview();
+  if (id === 'final-quiz') {
+    renderFinalQuiz();
   } else if (id) {
     renderModule(id);
   } else {
@@ -5529,14 +5529,14 @@ function retakeQuiz(id) {
 window.retakeQuiz = retakeQuiz;
 
 // ============================================================================
-// INTERVIEW SIMULATOR
+// FINAL QUIZ SIMULATOR
 // ============================================================================
 // Maps module tier to a friendly category name for the breakdown
 function categoryFor(tier) {
   if (tier === 1) return 'Tier 1 - Essential';
   if (tier === 2) return 'Tier 2 - Material';
   if (tier === 3) return 'Tier 3 - Round-out';
-  if (tier === 'tactics') return 'Interview tactics';
+  if (tier === 'tactics') return 'Practice tactics';
   if (tier === 'project') return 'Project phases';
   return 'Other';
 }
@@ -5587,7 +5587,7 @@ function buildQuestionPool() {
 
 // Stratified sample with Tier 1 75%, Tier 2 20%, Tier 3 5% weighting.
 // 20 questions per run = 15 / 4 / 1.
-function sampleInterview() {
+function sampleFinalQuiz() {
   const pool = buildQuestionPool();
   const t1 = pool.filter(q => q.tier === 1);
   const t2 = pool.filter(q => q.tier === 2);
@@ -5610,34 +5610,34 @@ function sampleInterview() {
   });
 }
 
-function startNewInterview() {
-  currentInterview = {
-    questions: sampleInterview(),
+function startNewFinalQuiz() {
+  currentFinalQuiz = {
+    questions: sampleFinalQuiz(),
     current: 0,
     answers: {},
     startTime: Date.now(),
     submitted: false,
     result: null
   };
-  renderInterview();
+  renderFinalQuiz();
 }
-window.startNewInterview = startNewInterview;
+window.startNewFinalQuiz = startNewFinalQuiz;
 
-function renderInterview() {
-  // No active interview: show intro
-  if (!currentInterview) {
-    renderInterviewIntro();
+function renderFinalQuiz() {
+  // No active final quiz: show intro
+  if (!currentFinalQuiz) {
+    renderFinalQuizIntro();
     return;
   }
-  if (currentInterview.submitted) {
-    renderInterviewResults();
+  if (currentFinalQuiz.submitted) {
+    renderFinalQuizResults();
     return;
   }
-  renderInterviewQuestion();
+  renderFinalQuizQuestion();
 }
 
-function renderInterviewIntro() {
-  const history = state.interviewHistory || [];
+function renderFinalQuizIntro() {
+  const history = state.finalQuizHistory || [];
   const totalQuestionsAvailable = buildQuestionPool().length;
   const bestScore = history.length ? Math.max(...history.map(h => h.score / h.total)) : 0;
   const bestPct = Math.round(bestScore * 100);
@@ -5669,12 +5669,12 @@ function renderInterviewIntro() {
     `;
   }
   document.getElementById('content').innerHTML = `
-    <div class="interview-intro">
+    <div class="final-quiz-intro">
       <div class="module-eyebrow">Capstone</div>
-      <h1 class="interview-hero">The <em>interview simulator</em></h1>
+      <h1 class="final-quiz-hero">The <em>final quiz</em></h1>
       <p>Twenty questions sampled across the three knowledge tiers each run. Different mix every time so you cannot memorize a single set. No feedback until the end, so you can see what actually stuck.</p>
       <p>Fifteen from Tier 1, four from Tier 2, one from Tier 3. Answer options are shuffled per question, and the pool combines course quiz questions with a larger dedicated simulator bank.</p>
-      <div class="interview-stats">
+      <div class="final-quiz-stats">
         <div class="stat-card">
           <div class="stat-card-num">20</div>
           <div class="stat-card-label">Questions</div>
@@ -5688,11 +5688,11 @@ function renderInterviewIntro() {
           <div class="stat-card-label">Runs taken</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-num">${history.length ? bestPct + '%' : ','}</div>
+          <div class="stat-card-num">${history.length ? bestPct + '%' : '—'}</div>
           <div class="stat-card-label">Best score</div>
         </div>
       </div>
-      <button class="btn primary" onclick="startNewInterview()">${history.length ? 'Start a new run' : 'Start interview'}</button>
+      <button class="btn primary" onclick="startNewFinalQuiz()">${history.length ? 'Start a new run' : 'Start final quiz'}</button>
       <h2 class="results-section-title">Past runs</h2>
       ${historyHtml}
     </div>
@@ -5713,8 +5713,8 @@ function formatAgo(ts) {
   return new Date(ts).toLocaleDateString();
 }
 
-function renderInterviewQuestion() {
-  const iv = currentInterview;
+function renderFinalQuizQuestion() {
+  const iv = currentFinalQuiz;
   const idx = iv.current;
   const q = iv.questions[idx];
   const total = iv.questions.length;
@@ -5728,7 +5728,7 @@ function renderInterviewQuestion() {
     return `<div class="${cls.join(' ')}" data-idx="${i}" title="Question ${i + 1}"></div>`;
   }).join('');
   document.getElementById('content').innerHTML = `
-    <div class="interview-active">
+    <div class="final-quiz-active">
       <div class="iv-bar"><div class="iv-bar-fill" style="width: ${((idx + 1) / total) * 100}%"></div></div>
       <div class="iv-header">
         <div class="iv-q-counter">Question ${idx + 1} of ${total}</div>
@@ -5749,7 +5749,7 @@ function renderInterviewQuestion() {
       <div class="iv-nav">
         <button class="btn" onclick="ivPrev()" ${idx === 0 ? 'disabled' : ''}>← Previous</button>
         <div class="iv-nav-right">
-          ${allAnswered ? `<button class="btn primary" onclick="submitInterview()">Submit interview</button>` : ''}
+          ${allAnswered ? `<button class="btn primary" onclick="submitFinalQuiz()">Submit quiz</button>` : ''}
           <button class="btn" onclick="ivNext()" ${idx === total - 1 ? 'disabled' : ''}>Next →</button>
         </div>
       </div>
@@ -5761,38 +5761,38 @@ function renderInterviewQuestion() {
   document.querySelectorAll('.option').forEach(btn => {
     btn.addEventListener('click', () => {
       const oi = parseInt(btn.dataset.opt);
-      currentInterview.answers[idx] = oi;
-      renderInterviewQuestion();
+      currentFinalQuiz.answers[idx] = oi;
+      renderFinalQuizQuestion();
     });
   });
   // Bind dot navigation
   document.querySelectorAll('.iv-dot').forEach(d => {
     d.addEventListener('click', () => {
-      currentInterview.current = parseInt(d.dataset.idx);
-      renderInterviewQuestion();
+      currentFinalQuiz.current = parseInt(d.dataset.idx);
+      renderFinalQuizQuestion();
     });
   });
   document.getElementById('main').scrollTo({ top: 0, behavior: 'instant' });
 }
 
 function ivPrev() {
-  if (currentInterview.current > 0) {
-    currentInterview.current--;
-    renderInterviewQuestion();
+  if (currentFinalQuiz.current > 0) {
+    currentFinalQuiz.current--;
+    renderFinalQuizQuestion();
   }
 }
 window.ivPrev = ivPrev;
 
 function ivNext() {
-  if (currentInterview.current < currentInterview.questions.length - 1) {
-    currentInterview.current++;
-    renderInterviewQuestion();
+  if (currentFinalQuiz.current < currentFinalQuiz.questions.length - 1) {
+    currentFinalQuiz.current++;
+    renderFinalQuizQuestion();
   }
 }
 window.ivNext = ivNext;
 
-function submitInterview() {
-  const iv = currentInterview;
+function submitFinalQuiz() {
+  const iv = currentFinalQuiz;
   const unanswered = iv.questions.filter((_, i) => iv.answers[i] === undefined).length;
   if (unanswered > 0) {
     if (!confirm(`You have ${unanswered} unanswered question${unanswered === 1 ? '' : 's'}. Submit anyway?`)) return;
@@ -5815,8 +5815,8 @@ function submitInterview() {
     perCategory
   };
   // Persist to history
-  state.interviewHistory = state.interviewHistory || [];
-  state.interviewHistory.push({
+  state.finalQuizHistory = state.finalQuizHistory || [];
+  state.finalQuizHistory.push({
     score: correct,
     total: iv.questions.length,
     duration: iv.result.duration,
@@ -5824,19 +5824,19 @@ function submitInterview() {
     breakdown: perCategory
   });
   saveState();
-  renderInterviewResults();
+  renderFinalQuizResults();
   renderGraph();
   renderList();
 }
-window.submitInterview = submitInterview;
+window.submitFinalQuiz = submitFinalQuiz;
 
-function renderInterviewResults() {
-  const iv = currentInterview;
+function renderFinalQuizResults() {
+  const iv = currentFinalQuiz;
   const r = iv.result;
   const pct = Math.round((r.score / r.total) * 100);
   let scoreClass = 'mid';
   let verdict = '';
-  if (pct >= 80) { scoreClass = 'pass'; verdict = 'Strong. You would handle this CTO interview well.'; }
+  if (pct >= 80) { scoreClass = 'pass'; verdict = 'Strong. These concepts are solid enough to explain cold.'; }
   else if (pct >= 65) { scoreClass = 'mid'; verdict = 'Solid. Tighten the misses below and you are there.'; }
   else if (pct >= 50) { scoreClass = 'mid'; verdict = 'Getting there. Review the topics in red and retake.'; }
   else { scoreClass = 'fail'; verdict = 'Not ready yet. Go back to the weak topics, then retake.'; }
@@ -5877,7 +5877,7 @@ function renderInterviewResults() {
   }).join('');
   document.getElementById('content').innerHTML = `
     <div class="iv-results">
-      <div class="module-eyebrow">Interview complete</div>
+      <div class="module-eyebrow">Quiz complete</div>
       <div class="results-hero">
         <div class="results-score ${scoreClass}">${r.score}/${r.total}</div>
         <div class="results-label">${pct}% · ${mins}m ${secs}s</div>
@@ -5888,8 +5888,8 @@ function renderInterviewResults() {
       <h2 class="results-section-title">Every question</h2>
       ${reviewHtml}
       <div class="iv-nav" style="margin-top: 48px;">
-        <button class="btn primary" onclick="startNewInterview()">New run (different questions)</button>
-        <button class="btn" onclick="exitInterview()">Back to course</button>
+        <button class="btn primary" onclick="startNewFinalQuiz()">New run (different questions)</button>
+        <button class="btn" onclick="exitFinalQuiz()">Back to course</button>
       </div>
     </div>
   `;
@@ -5898,11 +5898,11 @@ function renderInterviewResults() {
   document.getElementById('main').scrollTo({ top: 0, behavior: 'instant' });
 }
 
-function exitInterview() {
-  currentInterview = null;
+function exitFinalQuiz() {
+  currentFinalQuiz = null;
   goTo(null);
 }
-window.exitInterview = exitInterview;
+window.exitFinalQuiz = exitFinalQuiz;
 
 // ============================================================================
 // INIT
@@ -5912,8 +5912,8 @@ function init() {
   renderList();
   renderGraph();
   renderProgress();
-  if (state.currentId === 'interview') {
-    renderInterview();
+  if (state.currentId === 'final-quiz') {
+    renderFinalQuiz();
   } else if (state.currentId && findModule(state.currentId)) {
     renderModule(state.currentId);
   } else {

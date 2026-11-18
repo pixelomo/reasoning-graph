@@ -1,8 +1,8 @@
 # Final Test -- Cumulative Concept Bank
 
-Pre-interview revision for the Reasoning Graph project. Questions span every phase.
-Answer them out loud as if the CTO at Noeon were asking. No answers are written here
-on purpose -- if you cannot answer one, that is the gap to close before the interview.
+Self-check revision for the Reasoning Graph training project. Questions span every phase.
+Answer them out loud. No answers are written here on purpose -- if you cannot answer one,
+that is the gap to close before the concept counts as learned.
 
 **For future agents**: append a new section per phase you cover. Questions only, no answers.
 Cover the core concept, why it exists, and at least one "what breaks if you skip this".

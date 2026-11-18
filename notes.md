@@ -1,6 +1,6 @@
-# Study notes -- interview revision
+# Study notes -- training revision
 
-Format per concept: **core idea**, an interview **one-liner**, and the **quiz Q&A** that pins it down. Distilled from the build sessions. Full question bank lives in `final-test.md`.
+Format per concept: **core idea**, a short **one-liner**, and the **quiz Q&A** that pins it down. Distilled from the build sessions. Full question bank lives in `final-test.md`.
 
 ---
 

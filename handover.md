@@ -2,15 +2,21 @@
 
 **Repo**: `webgl-node-matrix` -- Vue 3 + TypeScript + Pinia + WebGL2 interactive reasoning graph with instanced rendering and GPU picking.
 
-**Purpose**: deliberate learning project. Aran is building this to internalize Vue 3 Composition API, modern TypeScript, and senior-level WebGL patterns ahead of a Senior Frontend Engineer interview at Noeon Research (Tokyo). The repo is public and will be referenced in his application.
+**Purpose**: deliberate training project. Aran built this to challenge himself to code by hand again after years of AI-built apps -- internalizing Vue 3 Composition API, modern TypeScript, and senior-level WebGL patterns without letting an agent write the implementation for him.
 
-**Current state (2026-06-12)**: Phases 0, 1, and 2 complete. Next up: Phase 3 (Pinia store). See `progress.md` for full status and session log.
+**Current state (2026-06-16)**: Phases 0, 1, 2, 3, and 4 complete. Next up: Phase 5 (WebGL2 setup and first render). See `progress.md` for full status and session log.
+
+**Note for Phase 5+**: `GraphCanvas.vue` in `src/` is currently a Phase-4 placeholder (a `<canvas>` element + `StatsOverlay`, no WebGL). The reference `reference/components/GraphCanvas.vue` is the *final* form with the full render loop, camera, and picking (Phases 5-10) baked in. Grow the placeholder toward it incrementally per phase -- do not paste the whole reference in at once.
 
 ---
 
 ## Critical operating constraints (read first)
 
-**Aran writes the code. You guide.** This is a learning project, not a delivery task. Every line in this repo needs to be something Aran can explain in a technical interview. If you write it for him, the project fails its purpose.
+**Aran writes the code. You guide.** This is a training project, not a delivery task. Every line in this repo needs to be something Aran can explain himself. If you write it for him, the project fails its purpose.
+
+**Reference-driven, open-book teaching (added session 2)**: a complete target implementation lives in `reference/`. Base every phase on the matching file(s) in `reference/`. Teach **open book**: walk Aran through the reference code concept by concept, explaining each new construct, then have him recreate it in `src/` in his own understanding. This is faster than blind discovery -- but the QUIZ after each section is non-negotiable, because the quiz (not the typing) is what proves a concept landed. If Aran copies a file verbatim, that is fine for getting it on screen, but quiz harder to confirm he can explain every line.
+
+**Final test (added session 2)**: maintain `final-test.md` -- a cumulative question bank covering every concept from Phases 1-13. Each agent appends the questions for the phases they cover as Aran progresses. It is his self-check revision document. Questions only in the doc; do not paste answers there (he answers them as practice).
 
 **Concrete behavior rules**:
 
@@ -20,13 +26,13 @@
 
 3. Do not write comments in code you produce. Aran writes his own comments as he internalizes each concept.
 
-4. If Aran asks you to "just write it for me", push back once. Remind him the CTO will probe deeply on anything in the repo. If he insists, comply -- but flag the section as "rewrite this in your own understanding before committing."
+4. If Aran asks you to "just write it for me", push back once. Remind him the point of this project is that he can explain every line himself. If he insists, comply -- but flag the section as "rewrite this in your own understanding before committing."
 
 5. Avoid em dashes in any prose you produce (README, docs, commit messages). Aran considers them an AI tell.
 
 6. Commits should be small and frequent, per concept not per session. Commit messages should reflect what was learned or built.
 
-7. **Quiz before commit (added session 1)**: every phase has two parts -- BUILD (Aran writes the code) and QUIZ (you quiz him verbally on the concepts, one question at a time). Aran must pass the quiz before committing the phase work. If he cannot explain a pattern in an interview, it is a liability. The quiz for each phase should cover: the core concept, why it exists, and at least one "what goes wrong if you skip this" question.
+7. **Quiz before commit (added session 1)**: every phase has two parts -- BUILD (Aran writes the code) and QUIZ (you quiz him verbally on the concepts, one question at a time). Aran must pass the quiz before committing the phase work. If he cannot explain a pattern, it did not stick. The quiz for each phase should cover: the core concept, why it exists, and at least one "what goes wrong if you skip this" question.
 
 **Context about Aran**: strong WebGL and creative coding background (Three.js, custom shaders, raymarching, Gaussian splatting). Has been working in React/Next.js and hasn't coded actively for ~3 years -- syntax memory is rusty but concepts come back quickly. TypeScript is new to him but he is picking it up fast. Vue 3 Composition API and Pinia are the primary knowledge gaps alongside WebGL instancing and GPU picking internals.
 
@@ -37,14 +43,14 @@
 | Layer | Choice | Why |
 |-------|--------|-----|
 | Build tool | Vite 6 | Vue's modern default, fast HMR, native ESM |
-| Framework | Vue 3 `<script setup>` | The role's primary requirement |
+| Framework | Vue 3 `<script setup>` | Primary target for this training project |
 | State | Pinia, setup-store syntax | Modern Vue state |
 | Language | TypeScript strict mode | Forces the discriminated union patterns Aran needs to internalize |
 | Styling | Vanilla CSS, minimal | Don't get distracted by Tailwind; keep focus on Vue+TS+WebGL |
 | Rendering | Raw WebGL2 (not Three.js) | Three.js abstracts away the instancing and picking primitives Aran needs to internalize |
 | Testing | Vitest + @testing-library/vue + MSW | Modern Vue testing stack |
 | Linting | ESLint 9 flat config + Prettier | Mandatory in any senior codebase |
-| CI | GitHub Actions | Listed as essential in the role spec |
+| CI | GitHub Actions | Standard senior-repo hygiene |
 
 Three.js can come later as `feat/threejs-comparison` but main must be raw WebGL2.
 
@@ -149,6 +155,8 @@ Key concepts:
 - `gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, nodeCount)` draws all N in one call
 
 Have Aran benchmark 1k, 10k, 100k nodes. Watch FPS in StatsOverlay.
+
+**Carry-over from Phase 3 (session 2):** `store.setMode` now only sets `mode` -- it no longer regenerates the graph. The renderer must watch `mode` and re-place the *existing* nodes (layout is a pure function of `nodes` + `mode`, not a reason to rebuild data). The "switching view usually wants a different node count" behavior is UI policy and belongs in `GraphControls.vue` (Phase 4) as an explicit `setMode` + `regenerate(count)` call pair at the click site, not in the store.
 
 **Quiz topics**: what problem does instancing solve; what does vertexAttribDivisor do and what happens if you forget it; why is one draw call better than N draw calls.
 
